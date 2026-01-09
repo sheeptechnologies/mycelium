@@ -1,0 +1,32 @@
+site_name: Mycelium
+site_description: Tree-sitter-based stack graphs for semantic indexing.
+site_author: Sheep Technologies
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Architecture: architecture.md
+  - Stack Graphs Concepts: stack-graphs.md
+  - Why Stack Graphs: why-stack-graphs.md
+  - Language Support: language-support.md
+  - Development: development.md
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - codehilite
+  - toc:
+      permalink: true
+
+plugins:
+  - search
