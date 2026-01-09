@@ -1,6 +1,7 @@
 site_name: Mycelium
 site_description: Tree-sitter-based stack graphs for semantic indexing.
 site_author: Sheep Technologies
+site_url: https://sheeptechnologies.github.io/mycelium/
 
 nav:
   - Home: index.md
@@ -20,6 +21,22 @@ theme:
     - navigation.sections
     - navigation.expand
     - content.code.copy
+  palette:
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - scheme: default
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
 
 markdown_extensions:
   - admonition
