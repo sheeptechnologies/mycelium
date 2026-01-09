@@ -1,0 +1,145 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Graph Visualization (DOT)</title>
+    <script src="https://unpkg.com/viz.js@2.1.2/viz.js"></script>
+    <script src="https://unpkg.com/viz.js@2.1.2/full.render.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #222; color: #eee; }
+        #graph { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        svg { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="graph"></div>
+    
+    <!-- data island -->
+    <script type="text/vnd.graphviz" id="dot-source">
+digraph G {
+    compound=true;
+    rankdir=TB;
+    bgcolor="#222f3e";
+    node [fontname="Helvetica,Arial,sans-serif"];
+    edge [fontname="Helvetica,Arial,sans-serif"];
+    splines=polyline;
+    nodesep=0.6;
+    ranksep=0.8;
+    clusterrank=local;
+subgraph cluster_node_1 {
+    fillcolor="#252526";
+    style="filled,rounded";
+    color="#555555";
+    penwidth=1.0;
+    margin=24;
+    node [style="filled,rounded", fontname="Fira Code, monospace", fontsize=10];
+    "node_1" [label="source_file", shape=rect, style="filled,rounded", color="#007acc", fillcolor="#007acc", fontcolor="white", fontsize=12, penwidth=0, margin="0.2,0.1"];
+    "node_2" [label="module", shape="box", style="filled,rounded", color="#444444", fillcolor="#383838", fontcolor="#ecf0f1", penwidth=1.0];
+subgraph cluster_node_3 {
+    fillcolor="#333333";
+    style="filled,rounded";
+    color="#555555";
+    penwidth=1.0;
+    margin=24;
+    node [style="filled,rounded", fontname="Fira Code, monospace", fontsize=10];
+    "node_3" [label="expression_statement_assignment", shape=rect, style="filled,rounded", color="#007acc", fillcolor="#007acc", fontcolor="white", fontsize=12, penwidth=0, margin="0.2,0.1"];
+    "node_4" [label="full_name ↑", shape="box", style="filled,rounded,bold", color="#00b894", fillcolor="#1b3a2f", fontcolor="#00b894", penwidth=1.0];
+subgraph cluster_node_5 {
+    fillcolor="#3e3e42";
+    style="filled,rounded";
+    color="#555555";
+    penwidth=1.0;
+    margin=24;
+    node [style="filled,rounded", fontname="Fira Code, monospace", fontsize=10];
+    "node_5" [label="lambda", shape=rect, style="filled,rounded", color="#007acc", fillcolor="#007acc", fontcolor="white", fontsize=12, penwidth=0, margin="0.2,0.1"];
+    "node_6" [label="first ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+    "node_7" [label="last ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+subgraph cluster_node_8 {
+    fillcolor="#252526";
+    style="filled,rounded";
+    color="#555555";
+    penwidth=1.0;
+    margin=24;
+    node [style="filled,rounded", fontname="Fira Code, monospace", fontsize=10];
+    "node_8" [label="call", shape=rect, style="filled,rounded", color="#007acc", fillcolor="#007acc", fontcolor="white", fontsize=12, penwidth=0, margin="0.2,0.1"];
+    "node_9" [label="first ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+    "node_10" [label=". ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+    "node_11" [label="title ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+    "node_12" [label="() ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+}
+subgraph cluster_node_13 {
+    fillcolor="#252526";
+    style="filled,rounded";
+    color="#555555";
+    penwidth=1.0;
+    margin=24;
+    node [style="filled,rounded", fontname="Fira Code, monospace", fontsize=10];
+    "node_13" [label="call", shape=rect, style="filled,rounded", color="#007acc", fillcolor="#007acc", fontcolor="white", fontsize=12, penwidth=0, margin="0.2,0.1"];
+    "node_14" [label="last ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+    "node_15" [label=". ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+    "node_16" [label="title ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+    "node_17" [label="() ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+}
+}
+}
+subgraph cluster_node_18 {
+    fillcolor="#333333";
+    style="filled,rounded";
+    color="#555555";
+    penwidth=1.0;
+    margin=24;
+    node [style="filled,rounded", fontname="Fira Code, monospace", fontsize=10];
+    "node_18" [label="expression_statement_assignment", shape=rect, style="filled,rounded", color="#007acc", fillcolor="#007acc", fontcolor="white", fontsize=12, penwidth=0, margin="0.2,0.1"];
+subgraph cluster_node_19 {
+    fillcolor="#3e3e42";
+    style="filled,rounded";
+    color="#555555";
+    penwidth=1.0;
+    margin=24;
+    node [style="filled,rounded", fontname="Fira Code, monospace", fontsize=10];
+    "node_19" [label="call", shape=rect, style="filled,rounded", color="#007acc", fillcolor="#007acc", fontcolor="white", fontsize=12, penwidth=0, margin="0.2,0.1"];
+    "node_20" [label="full_name ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+    "node_21" [label="() ↓", shape="box", style="filled,rounded,bold", color="#ff5252", fillcolor="#4e342e", fontcolor="#ff5252", penwidth=1.0];
+}
+}
+}
+    "node_11" -> "node_12" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_10" -> "node_11" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_9" -> "node_10" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_8" -> "node_9" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_16" -> "node_17" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_15" -> "node_16" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_14" -> "node_15" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_13" -> "node_14" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_5" -> "node_6" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_5" -> "node_7" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_5" -> "node_8" [lhead="cluster_node_8", color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_5" -> "node_13" [lhead="cluster_node_13", color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_3" -> "node_4" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_3" -> "node_5" [lhead="cluster_node_5", color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_20" -> "node_21" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_19" -> "node_20" [color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_18" -> "node_19" [lhead="cluster_node_19", color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_2" -> "node_3" [lhead="cluster_node_3", color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_2" -> "node_18" [lhead="cluster_node_18", color="#666666", penwidth=0.8, arrowsize=0.6];
+    "node_1" -> "node_2" [color="#666666", penwidth=0.8, arrowsize=0.6];
+}
+    </script>
+
+    <script>
+        var viz = new Viz();
+        var dotSource = document.getElementById('dot-source').innerText;
+        
+        viz.renderSVGElement(dotSource)
+        .then(function(element) {
+            document.getElementById('graph').appendChild(element);
+        })
+        .catch(error => {
+            // Create a new Viz instance (sometimes helps with state) to render error
+            console.error(error);
+            document.getElementById('graph').innerHTML = "<div style='color:red; font-family:monospace'><pre>Rendering Error: " + error + "</pre></div>";
+        });
+    </script>
+</body>
+</html>
