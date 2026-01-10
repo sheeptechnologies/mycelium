@@ -29,9 +29,11 @@ mycelium/
 ├── src/
 │   ├── captures.py        # Tree-sitter query compilation and dispatch
 │   ├── graph.py           # Graph builder and stack orchestration
+│   ├── graph_builder.py  # High-level API for building graphs
 │   ├── models.py          # Core data model (GNode)
 │   ├── visualizer.py      # HTML/Graphviz renderer
 │   └── languages/         # Per-language queries + handlers
+├── cli.py                 # Command-line interface
 ├── docs/                  # MkDocs documentation
 ├── mkdocs.yml             # Documentation configuration
 └── README.md
@@ -53,29 +55,50 @@ pip install -r requirements.txt
 
 ## Quickstart
 
+### Command Line Interface
+
+The easiest way to generate a stack graph visualization is using the CLI:
+
+```bash
+# Generate graph from a Python file
+python cli.py example.py
+
+# Specify output file
+python cli.py example.py -o output.html
+
+# Add custom title
+python cli.py example.py -t "My Project Graph"
+
+# Verbose output
+python cli.py example.py -v
+```
+
+The CLI will generate an interactive HTML visualization that you can open in your browser.
+
+### Python API
+
+You can also use Mycelium programmatically:
+
 ```python
-from tree_sitter import Parser
-from src.captures import CapturesManager
-from src.graph import GraphBuilder
+from src.graph_builder import StackGraphBuilder
 from src.visualizer import visualize_graph
 
+# From a file
+builder = StackGraphBuilder("python")
+roots = builder.build_from_file("example.py")
+visualize_graph(roots, "output.html", title="My Graph")
+
+# From code string
 code = """
 full_name = lambda first, last: f'Full name: {first.title()} {last.title()}'
 full_name('guido', 'van rossum')
 """
 
-manager = CapturesManager("python")
-parser = Parser(manager.LANGUAGE)
-root = parser.parse(code.encode("utf8")).root_node
-
-captures = manager.execute(root)
-builder = GraphBuilder()
-roots = builder.build(captures, manager.get_handlers())
-
+roots = builder.build_from_code(code)
 visualize_graph(roots)
 ```
 
-Open `graph.html` in a browser to inspect the graph.
+Open the generated HTML file in a browser to inspect the graph.
 
 ---
 

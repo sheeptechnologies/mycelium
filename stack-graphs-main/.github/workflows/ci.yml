@@ -1,0 +1,200 @@
+name: Continuous integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 0 1,15 * *"
+
+permissions:
+  contents: read
+
+# In the event that there is a new push to the ref, cancel any running jobs because there are now obsolete, and wasting resources.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-rust:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable]
+    env:
+      # cargo hack does not use the default-members in Cargo.toml, so we restrict to those explicitly
+      CARGO_HACK: cargo hack -p lsp-positions -p stack-graphs -p tree-sitter-stack-graphs --feature-powerset --exclude-features copious-debugging
+
+    steps:
+      - name: Install Rust environment
+        uses: hecrj/setup-rust-action@110f36749599534ca96628b82f52ae67e5d95a3c # v2
+        with:
+          rust-version: ${{ matrix.rust }}
+      - name: Install cargo-hack
+        run: cargo install cargo-hack
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            target
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+      - name: Build library (all feature combinations)
+        run: ${{ env.CARGO_HACK }} --no-dev-deps build
+      - name: Run test suite (all feature combinations)
+        run: ${{ env.CARGO_HACK }} test
+      - name: Run test suite with all optimizations (default features)
+        run: cargo test --release
+      - name: Install valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind
+      - name: Run test suite under valgrind (default features)
+        id: valgrind
+        # We only need to use valgrind to test the crates that have C bindings.
+        run: script/ci-test-valgrind -p stack-graphs
+      - name: Upload valgrind log
+        if: ${{ failure() && steps.valgrind.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: valgrind logs
+          path: ${{ runner.temp }}/valgrind.log
+      - name: Ensure C headers are up to date
+        run: |
+          script/cbindgen
+          test -z "$(git status --porcelain)"
+
+  test-init:
+    needs: [test-rust]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable]
+
+    steps:
+      - name: Install Rust environment
+        uses: hecrj/setup-rust-action@110f36749599534ca96628b82f52ae67e5d95a3c # v2
+        with:
+          rust-version: ${{ matrix.rust }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            target
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+      - name: Generate, build, and run new language project
+        run: script/ci-test-init
+
+  list-languages:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: languages
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: List languages
+        id: language-list
+        run: echo "languages=$(find -mindepth 1 -maxdepth 1 -type d -printf '%P\n' | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+    outputs:
+      languages: ${{ steps.language-list.outputs.languages }}
+
+  test-languages:
+    needs: [list-languages]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: ${{ fromJson(needs.list-languages.outputs.languages) }}
+        rust: [stable]
+
+    steps:
+      - name: Install Rust environment
+        uses: hecrj/setup-rust-action@110f36749599534ca96628b82f52ae67e5d95a3c # v2
+        with:
+          rust-version: ${{ matrix.rust }}
+      - name: Install cargo-hack
+        run: cargo install cargo-hack
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            target
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build (all feature combinations)
+        run: cargo hack -p ${{ matrix.language }} --feature-powerset build
+      - name: Test (all features)
+        run: cargo test -p ${{ matrix.language }} --all-features
+
+  test-cli:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable]
+    env:
+      TEST_NAME: typescript_minimal_project
+      TSSG_TS: tree-sitter-stack-graphs-typescript
+
+    steps:
+      - name: Install Rust environment
+        uses: hecrj/setup-rust-action@110f36749599534ca96628b82f52ae67e5d95a3c # v2
+        with:
+          rust-version: ${{ matrix.rust }}
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            target
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Build
+        run: cargo build --release -p ${{ env.TSSG_TS }} --features cli
+      - name: Checkout test code
+        run: unzip ${{ env.TEST_NAME }}.zip
+        working-directory: data
+      - name: Index
+        run: |
+          target/release/${{ env.TSSG_TS }} index \
+            -D data/${{ env.TEST_NAME }}.sqlite \
+            --verbose \
+            --hide-error-details \
+            data/${{ env.TEST_NAME }}
+      - name: Status
+        run: |
+          target/release/${{ env.TSSG_TS }} status \
+            -D data/${{ env.TEST_NAME }}.sqlite \
+            --all
+      - name: Query
+        run: |
+          target/release/${{ env.TSSG_TS }} query \
+            -D data/${{ env.TEST_NAME }}.sqlite \
+            definition \
+              data/${{ env.TEST_NAME }}/index.ts:3:10
+      - name: Index (forced)
+        run: |
+          target/release/${{ env.TSSG_TS }} index \
+            -D data/${{ env.TEST_NAME }}.sqlite \
+            --verbose \
+            --hide-error-details \
+            data/${{ env.TEST_NAME }}

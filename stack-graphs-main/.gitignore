@@ -1,0 +1,12 @@
+# Rust build stuff
+Cargo.lock
+/target/
+*/target/
+
+# Locally installed binaries
+/.crates.toml
+/.crates2.json
+/bin/
+
+# MacOS stuff
+.DS_Store
