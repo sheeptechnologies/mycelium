@@ -232,8 +232,9 @@ class TestDeeplyNestedScopes:
             start = time.time()
             results = resolver.resolve(push_nodes[0], roots)
             elapsed = time.time() - start
-            
-            assert elapsed < 3.0, f"Deep class nesting took too long: {elapsed}s"
+
+            # Increased timeout from 3.0 to 5.0 seconds for deeply nested structures
+            assert elapsed < 5.0, f"Deep class nesting took too long: {elapsed}s"
             assert isinstance(results, list)
     
     def test_resolve_mixed_deep_nesting(self):

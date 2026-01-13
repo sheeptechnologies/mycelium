@@ -12,8 +12,18 @@ from src.graph import GraphBuilder
 # Code to parse
 code = """  
 
-full_name = lambda first, last: f'Full name: {first.title()} {last.title()}'
-full_name('guido', 'van rossum')
+class A():
+    x = 10
+    def method_a(self):
+        pass
+    
+class B(A):
+    def method_b(self):
+        return self.x
+
+def main():
+    b = B()
+    a = b.method_b()
 
 """
 

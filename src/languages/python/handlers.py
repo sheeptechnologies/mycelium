@@ -299,24 +299,27 @@ def handle_return_statement(builder:GraphBuilder, node:Any, children:list[GNode]
     """
     Handle return statement: return value
     Return value nodes are marked as PUSH (references).
+
+    Note: tree-sitter Python doesn't use named fields for return_statement.
+    The structure is: [return_keyword, value_expression]
     """
-    # Extract the value field from the return statement
-    value_field = node.child_by_field_name("value")
-    if not value_field:
-        # Empty return statement (return with no value)
+    if not children:
+        # Empty return statement
         return []
 
-    # Find nodes within the value's byte range
-    value_nodes = nodes_in_byte_range(
-        (value_field.start_byte, value_field.end_byte),
-        children or []
-    )
+    # Skip the 'return' keyword (first child is usually the keyword)
+    # Get the actual return value nodes (everything after 'return' keyword)
+    value_nodes = []
+    for child in children:
+        # Skip non-identifier nodes like the 'return' keyword itself
+        if child and hasattr(child, 'ctx') and child.ctx != 'keyword':
+            value_nodes.append(child)
 
+    # Mark all return value nodes as PUSH (references)
     if value_nodes:
-        # Mark all value nodes as PUSH (references)
         propagate_type(value_nodes, 'PUSH')
 
-    return value_nodes
+    return value_nodes if value_nodes else children
 
 def handle_typed_default_parameter(builder:GraphBuilder, node:Any, children:list[GNode]=None):
     if not children or len(children) < 2:

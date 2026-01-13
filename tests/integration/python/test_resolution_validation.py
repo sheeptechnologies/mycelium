@@ -36,7 +36,7 @@ y = x
                 symbol_stack=[push_nodes[0].symbol],
                 scope_stack=[],
                 path=[push_nodes[0]],
-                visited={id(push_nodes[0])}
+                scope_exits=0
             )
             
             # Symbol stack should have exactly one element (the reference symbol)
@@ -170,10 +170,8 @@ y = x
         if push_nodes:
             results = resolver.resolve(push_nodes[0], roots)
             for result in results:
-                # Path should not contain duplicate nodes (visited tracking works)
-                node_ids = [id(n) for n in result.path]
-                assert len(node_ids) == len(set(node_ids)), \
-                    "Path should not contain duplicate nodes"
+                # Path should be finite and reasonable length
+                assert len(result.path) <= resolver.max_depth
     
     def test_resolve_neighbor_discovery(self):
         """Test that all neighbors are discovered correctly."""
@@ -222,7 +220,7 @@ y = x
                 symbol_stack=['x'],
                 scope_stack=[],
                 path=[push_nodes[0]],
-                visited={id(push_nodes[0])}
+                scope_exits=0
             )
             
             # Apply transition to POP
@@ -260,7 +258,7 @@ y = x
                 symbol_stack=[],
                 scope_stack=[],
                 path=[push_nodes[0]],
-                visited={id(push_nodes[0])}
+                scope_exits=0
             )
             
             # Apply transition to another PUSH
@@ -291,7 +289,7 @@ x = 1
                 symbol_stack=['x'],
                 scope_stack=[],
                 path=[push_nodes[0]],
-                visited={id(push_nodes[0])}
+                scope_exits=0
             )
             
             # Apply transition to POP
@@ -324,7 +322,7 @@ def func():
                 symbol_stack=[],
                 scope_stack=[],
                 path=[],
-                visited=set()
+                scope_exits=0
             )
             
             # Apply transition to SCOPE

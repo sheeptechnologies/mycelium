@@ -23,9 +23,10 @@ class ResolutionResult:
     definition: GNode  # Il nodo POP trovato
     path: List[GNode]  # Il percorso dal riferimento alla definizione
     confidence: float = 1.0  # Livello di confidenza (0.0-1.0)
+    scope_exits: int = 0
     
     def __repr__(self):
-        return f"ResolutionResult(definition={self.definition.symbol}, path_length={len(self.path)}, confidence={self.confidence})"
+        return f"ResolutionResult(definition={self.definition.symbol}, path_length={len(self.path)}, confidence={self.confidence}, exits={self.scope_exits})"
 
 
 @dataclass
@@ -35,9 +36,9 @@ class ResolutionState:
     symbol_stack: List[str]  # Stack di simboli da risolvere
     scope_stack: List[GNode]  # Stack di scope attivi
     path: List[GNode]  # Path percorso finora
-    visited: Set[int]  # Nodi visitati (per evitare cicli)
+    scope_exits: int = 0 # Number of times we popped from scope stack (leaving a scope)
     
     def __repr__(self):
-        return f"ResolutionState(node={self.current_node.symbol}, symbol_stack={len(self.symbol_stack)}, scope_stack={len(self.scope_stack)}, path_length={len(self.path)})"
+        return f"ResolutionState(node={self.current_node.symbol}, symbol_stack={len(self.symbol_stack)}, scope_stack={len(self.scope_stack)}, exits={self.scope_exits})"
     
     

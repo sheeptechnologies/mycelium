@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mycelium Stack Graph Debugger</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Prism.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar: File Browser -->
+        <div class="sidebar-left">
+            <div class="sidebar-header">
+                <h2>Codebase</h2>
+            </div>
+            <div class="codebase-input">
+                <input type="text" id="codebase-path" placeholder="Enter codebase path..." value="">
+                <button id="load-codebase-btn" onclick="loadCodebase()">Load</button>
+            </div>
+            <div class="file-list-container">
+                <div id="file-list" class="file-list"></div>
+            </div>
+        </div>
+
+        <!-- Center: Code Editor -->
+        <div class="editor-container">
+            <div class="editor-header">
+                <span id="current-file-name">No file selected</span>
+                <button id="build-graph-btn" onclick="buildGraph()" disabled>Build Graph</button>
+            </div>
+            <div id="editor-wrapper">
+                <pre id="editor" class="code-editor"><code id="code-content" class="language-python"></code></pre>
+            </div>
+        </div>
+
+        <!-- Right Sidebar: Resolution Path -->
+        <div class="sidebar-right">
+            <div class="sidebar-header">
+                <h2>Resolution Path</h2>
+            </div>
+            <div id="path-display" class="path-display">
+                <p class="placeholder">Click on a reference in the code to see the resolution path</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

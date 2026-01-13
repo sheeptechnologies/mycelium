@@ -1,0 +1,3983 @@
+Found 87 discrepancies:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/functions.py
+Error: Resolution failed for y at line 8. Expected line 1
+Code snippet:
+import a.x.y
+import b.x.y
+
+def get_x(value):
+    return value.x
+    #      ^ defined: 4
+
+print get_x(a).y
+#              ^ defined: 1
+
+print get_x(b).y
+#              ^ defined: 2
+
+def get_a():
+    return a
+
+print get_a(b).x
+#              ^ defined: 1
+
+print get_x(foo=1, value=a).y
+#                           ^ defined: 1
+
+def foo(w: int, x, y=1, z: int=4, *args, **dict):
+    local = x
+#           ^ defined: 23
+    print(args, w, z)
+#         ^ defined: 23
+#               ^ defined: 23
+#                  ^ defined: 23
+    return y
+#          ^ defined: 23
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/functions.py
+Error: Resolution failed for y at line 11. Expected line 2
+Code snippet:
+import a.x.y
+import b.x.y
+
+def get_x(value):
+    return value.x
+    #      ^ defined: 4
+
+print get_x(a).y
+#              ^ defined: 1
+
+print get_x(b).y
+#              ^ defined: 2
+
+def get_a():
+    return a
+
+print get_a(b).x
+#              ^ defined: 1
+
+print get_x(foo=1, value=a).y
+#                           ^ defined: 1
+
+def foo(w: int, x, y=1, z: int=4, *args, **dict):
+    local = x
+#           ^ defined: 23
+    print(args, w, z)
+#         ^ defined: 23
+#               ^ defined: 23
+#                  ^ defined: 23
+    return y
+#          ^ defined: 23
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/functions.py
+Error: Resolution failed for y at line 20. Expected line 1
+Code snippet:
+import a.x.y
+import b.x.y
+
+def get_x(value):
+    return value.x
+    #      ^ defined: 4
+
+print get_x(a).y
+#              ^ defined: 1
+
+print get_x(b).y
+#              ^ defined: 2
+
+def get_a():
+    return a
+
+print get_a(b).x
+#              ^ defined: 1
+
+print get_x(foo=1, value=a).y
+#                           ^ defined: 1
+
+def foo(w: int, x, y=1, z: int=4, *args, **dict):
+    local = x
+#           ^ defined: 23
+    print(args, w, z)
+#         ^ defined: 23
+#               ^ defined: 23
+#                  ^ defined: 23
+    return y
+#          ^ defined: 23
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/pattern_matching.py
+Error: Resolution failed for obj at line 14. Expected line 13
+Code snippet:
+command = 1
+current_room = 2
+character = 3
+
+match command.split():
+    # ^ defined: 1
+    case ["quit"]:
+        print("Goodbye!")
+        quit_game()
+    case ["look"]:
+        current_room.describe()
+        # ^ defined: 2
+    case ["get", obj]:
+        character.get(obj, current_room)
+        # ^ defined: 3
+        #              ^ defined: 13
+        #                    ^ defined: 2
+    case ["go", direction]:
+        current_room = current_room.neighbor(direction)
+        #                                      ^ defined: 18
+    case { "foo": foo }:
+        print(foo)
+        #      ^ defined: 21
+    case {"bar": bar, "quux": quux}:
+        print(bar,quux)
+        #      ^ defined: 24
+        #           ^ defined: 24
+    case ["grab", { "key": {"garply": garply}}]:
+        print(garply)
+        #       ^ defined: 28
+    case ["drop", *objs]:
+        print(objs)
+        #      ^ defined: 31
+    case ["get", obj] | ["pick", "up", obj] | ["pick", obj, "up"]:
+        print(obj)
+        #      ^ defined: 34, 34, 34
+    case ["go", ("north" | "south" | "east" | "west") as direction2]:
+        current_room = current_room.neighbor(direction2)
+        #                                       ^ defined: 37
+    case (foo, "bar"):
+        print(foo)
+        #     ^ defined: 40
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/pattern_matching.py
+Error: Resolution failed for direction at line 19. Expected line 18
+Code snippet:
+command = 1
+current_room = 2
+character = 3
+
+match command.split():
+    # ^ defined: 1
+    case ["quit"]:
+        print("Goodbye!")
+        quit_game()
+    case ["look"]:
+        current_room.describe()
+        # ^ defined: 2
+    case ["get", obj]:
+        character.get(obj, current_room)
+        # ^ defined: 3
+        #              ^ defined: 13
+        #                    ^ defined: 2
+    case ["go", direction]:
+        current_room = current_room.neighbor(direction)
+        #                                      ^ defined: 18
+    case { "foo": foo }:
+        print(foo)
+        #      ^ defined: 21
+    case {"bar": bar, "quux": quux}:
+        print(bar,quux)
+        #      ^ defined: 24
+        #           ^ defined: 24
+    case ["grab", { "key": {"garply": garply}}]:
+        print(garply)
+        #       ^ defined: 28
+    case ["drop", *objs]:
+        print(objs)
+        #      ^ defined: 31
+    case ["get", obj] | ["pick", "up", obj] | ["pick", obj, "up"]:
+        print(obj)
+        #      ^ defined: 34, 34, 34
+    case ["go", ("north" | "south" | "east" | "west") as direction2]:
+        current_room = current_room.neighbor(direction2)
+        #                                       ^ defined: 37
+    case (foo, "bar"):
+        print(foo)
+        #     ^ defined: 40
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/pattern_matching.py
+Error: Resolution failed for foo at line 22. Expected line 21
+Code snippet:
+command = 1
+current_room = 2
+character = 3
+
+match command.split():
+    # ^ defined: 1
+    case ["quit"]:
+        print("Goodbye!")
+        quit_game()
+    case ["look"]:
+        current_room.describe()
+        # ^ defined: 2
+    case ["get", obj]:
+        character.get(obj, current_room)
+        # ^ defined: 3
+        #              ^ defined: 13
+        #                    ^ defined: 2
+    case ["go", direction]:
+        current_room = current_room.neighbor(direction)
+        #                                      ^ defined: 18
+    case { "foo": foo }:
+        print(foo)
+        #      ^ defined: 21
+    case {"bar": bar, "quux": quux}:
+        print(bar,quux)
+        #      ^ defined: 24
+        #           ^ defined: 24
+    case ["grab", { "key": {"garply": garply}}]:
+        print(garply)
+        #       ^ defined: 28
+    case ["drop", *objs]:
+        print(objs)
+        #      ^ defined: 31
+    case ["get", obj] | ["pick", "up", obj] | ["pick", obj, "up"]:
+        print(obj)
+        #      ^ defined: 34, 34, 34
+    case ["go", ("north" | "south" | "east" | "west") as direction2]:
+        current_room = current_room.neighbor(direction2)
+        #                                       ^ defined: 37
+    case (foo, "bar"):
+        print(foo)
+        #     ^ defined: 40
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/pattern_matching.py
+Error: Resolution failed for bar at line 25. Expected line 24
+Code snippet:
+command = 1
+current_room = 2
+character = 3
+
+match command.split():
+    # ^ defined: 1
+    case ["quit"]:
+        print("Goodbye!")
+        quit_game()
+    case ["look"]:
+        current_room.describe()
+        # ^ defined: 2
+    case ["get", obj]:
+        character.get(obj, current_room)
+        # ^ defined: 3
+        #              ^ defined: 13
+        #                    ^ defined: 2
+    case ["go", direction]:
+        current_room = current_room.neighbor(direction)
+        #                                      ^ defined: 18
+    case { "foo": foo }:
+        print(foo)
+        #      ^ defined: 21
+    case {"bar": bar, "quux": quux}:
+        print(bar,quux)
+        #      ^ defined: 24
+        #           ^ defined: 24
+    case ["grab", { "key": {"garply": garply}}]:
+        print(garply)
+        #       ^ defined: 28
+    case ["drop", *objs]:
+        print(objs)
+        #      ^ defined: 31
+    case ["get", obj] | ["pick", "up", obj] | ["pick", obj, "up"]:
+        print(obj)
+        #      ^ defined: 34, 34, 34
+    case ["go", ("north" | "south" | "east" | "west") as direction2]:
+        current_room = current_room.neighbor(direction2)
+        #                                       ^ defined: 37
+    case (foo, "bar"):
+        print(foo)
+        #     ^ defined: 40
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/pattern_matching.py
+Error: Resolution failed for quux at line 25. Expected line 24
+Code snippet:
+command = 1
+current_room = 2
+character = 3
+
+match command.split():
+    # ^ defined: 1
+    case ["quit"]:
+        print("Goodbye!")
+        quit_game()
+    case ["look"]:
+        current_room.describe()
+        # ^ defined: 2
+    case ["get", obj]:
+        character.get(obj, current_room)
+        # ^ defined: 3
+        #              ^ defined: 13
+        #                    ^ defined: 2
+    case ["go", direction]:
+        current_room = current_room.neighbor(direction)
+        #                                      ^ defined: 18
+    case { "foo": foo }:
+        print(foo)
+        #      ^ defined: 21
+    case {"bar": bar, "quux": quux}:
+        print(bar,quux)
+        #      ^ defined: 24
+        #           ^ defined: 24
+    case ["grab", { "key": {"garply": garply}}]:
+        print(garply)
+        #       ^ defined: 28
+    case ["drop", *objs]:
+        print(objs)
+        #      ^ defined: 31
+    case ["get", obj] | ["pick", "up", obj] | ["pick", obj, "up"]:
+        print(obj)
+        #      ^ defined: 34, 34, 34
+    case ["go", ("north" | "south" | "east" | "west") as direction2]:
+        current_room = current_room.neighbor(direction2)
+        #                                       ^ defined: 37
+    case (foo, "bar"):
+        print(foo)
+        #     ^ defined: 40
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/pattern_matching.py
+Error: Resolution failed for garply at line 29. Expected line 28
+Code snippet:
+command = 1
+current_room = 2
+character = 3
+
+match command.split():
+    # ^ defined: 1
+    case ["quit"]:
+        print("Goodbye!")
+        quit_game()
+    case ["look"]:
+        current_room.describe()
+        # ^ defined: 2
+    case ["get", obj]:
+        character.get(obj, current_room)
+        # ^ defined: 3
+        #              ^ defined: 13
+        #                    ^ defined: 2
+    case ["go", direction]:
+        current_room = current_room.neighbor(direction)
+        #                                      ^ defined: 18
+    case { "foo": foo }:
+        print(foo)
+        #      ^ defined: 21
+    case {"bar": bar, "quux": quux}:
+        print(bar,quux)
+        #      ^ defined: 24
+        #           ^ defined: 24
+    case ["grab", { "key": {"garply": garply}}]:
+        print(garply)
+        #       ^ defined: 28
+    case ["drop", *objs]:
+        print(objs)
+        #      ^ defined: 31
+    case ["get", obj] | ["pick", "up", obj] | ["pick", obj, "up"]:
+        print(obj)
+        #      ^ defined: 34, 34, 34
+    case ["go", ("north" | "south" | "east" | "west") as direction2]:
+        current_room = current_room.neighbor(direction2)
+        #                                       ^ defined: 37
+    case (foo, "bar"):
+        print(foo)
+        #     ^ defined: 40
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/pattern_matching.py
+Error: Resolution failed for obj at line 35. Expected line 34
+Code snippet:
+command = 1
+current_room = 2
+character = 3
+
+match command.split():
+    # ^ defined: 1
+    case ["quit"]:
+        print("Goodbye!")
+        quit_game()
+    case ["look"]:
+        current_room.describe()
+        # ^ defined: 2
+    case ["get", obj]:
+        character.get(obj, current_room)
+        # ^ defined: 3
+        #              ^ defined: 13
+        #                    ^ defined: 2
+    case ["go", direction]:
+        current_room = current_room.neighbor(direction)
+        #                                      ^ defined: 18
+    case { "foo": foo }:
+        print(foo)
+        #      ^ defined: 21
+    case {"bar": bar, "quux": quux}:
+        print(bar,quux)
+        #      ^ defined: 24
+        #           ^ defined: 24
+    case ["grab", { "key": {"garply": garply}}]:
+        print(garply)
+        #       ^ defined: 28
+    case ["drop", *objs]:
+        print(objs)
+        #      ^ defined: 31
+    case ["get", obj] | ["pick", "up", obj] | ["pick", obj, "up"]:
+        print(obj)
+        #      ^ defined: 34, 34, 34
+    case ["go", ("north" | "south" | "east" | "west") as direction2]:
+        current_room = current_room.neighbor(direction2)
+        #                                       ^ defined: 37
+    case (foo, "bar"):
+        print(foo)
+        #     ^ defined: 40
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/pattern_matching.py
+Error: Resolution failed for foo at line 41. Expected line 40
+Code snippet:
+command = 1
+current_room = 2
+character = 3
+
+match command.split():
+    # ^ defined: 1
+    case ["quit"]:
+        print("Goodbye!")
+        quit_game()
+    case ["look"]:
+        current_room.describe()
+        # ^ defined: 2
+    case ["get", obj]:
+        character.get(obj, current_room)
+        # ^ defined: 3
+        #              ^ defined: 13
+        #                    ^ defined: 2
+    case ["go", direction]:
+        current_room = current_room.neighbor(direction)
+        #                                      ^ defined: 18
+    case { "foo": foo }:
+        print(foo)
+        #      ^ defined: 21
+    case {"bar": bar, "quux": quux}:
+        print(bar,quux)
+        #      ^ defined: 24
+        #           ^ defined: 24
+    case ["grab", { "key": {"garply": garply}}]:
+        print(garply)
+        #       ^ defined: 28
+    case ["drop", *objs]:
+        print(objs)
+        #      ^ defined: 31
+    case ["get", obj] | ["pick", "up", obj] | ["pick", obj, "up"]:
+        print(obj)
+        #      ^ defined: 34, 34, 34
+    case ["go", ("north" | "south" | "east" | "west") as direction2]:
+        current_room = current_room.neighbor(direction2)
+        #                                       ^ defined: 37
+    case (foo, "bar"):
+        print(foo)
+        #     ^ defined: 40
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/aliased_imports.py
+Error: Resolution failed for a at line 17. Expected line 5
+Code snippet:
+#------ path: foo.py ------#
+
+# module
+class A:
+    a = 1
+
+class B:
+    class C:
+        class D:
+            d = 2
+
+#------ path: main.py ---#
+
+from foo import A as X, B.C.D as Y
+import foo as f
+
+print X.a, Y.d
+#       ^ defined: 5
+#            ^ defined: 10
+
+print A, B.C
+#     ^ defined:
+#        ^ defined:
+#          ^ defined:
+
+print f.B
+#     ^ defined: 3, 15
+#       ^ defined: 7
+
+print foo
+#     ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/aliased_imports.py
+Error: Resolution failed for d at line 17. Expected line 10
+Code snippet:
+#------ path: foo.py ------#
+
+# module
+class A:
+    a = 1
+
+class B:
+    class C:
+        class D:
+            d = 2
+
+#------ path: main.py ---#
+
+from foo import A as X, B.C.D as Y
+import foo as f
+
+print X.a, Y.d
+#       ^ defined: 5
+#            ^ defined: 10
+
+print A, B.C
+#     ^ defined:
+#        ^ defined:
+#          ^ defined:
+
+print f.B
+#     ^ defined: 3, 15
+#       ^ defined: 7
+
+print foo
+#     ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/aliased_imports.py
+Error: Resolution failed for B at line 26. Expected line 7
+Code snippet:
+#------ path: foo.py ------#
+
+# module
+class A:
+    a = 1
+
+class B:
+    class C:
+        class D:
+            d = 2
+
+#------ path: main.py ---#
+
+from foo import A as X, B.C.D as Y
+import foo as f
+
+print X.a, Y.d
+#       ^ defined: 5
+#            ^ defined: 10
+
+print A, B.C
+#     ^ defined:
+#        ^ defined:
+#          ^ defined:
+
+print f.B
+#     ^ defined: 3, 15
+#       ^ defined: 7
+
+print foo
+#     ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 13. Expected line 2
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 13. Expected line 4
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 16. Expected line 2
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 16. Expected line 4
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 19. Expected line 2
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 19. Expected line 4
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 22. Expected line 2
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 22. Expected line 4
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 29. Expected line 2
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 29. Expected line 4
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 29. Expected line 6
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 36. Expected line 2
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/tuples.py
+Error: Resolution failed for x at line 36. Expected line 4
+Code snippet:
+class a:
+    x = 1
+class b:
+    x = 1
+class c:
+    x = 1
+
+(a1, b1) = (a, b)
+a2, b2 = (a, b)
+(a3, b3) = (a, b)
+a4, b4 = a, b
+
+print a1.x, b1.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a2.x, b2.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a3.x, b3.x
+#        ^ defined: 2
+#              ^ defined: 4
+print a4.x, b4.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+t = (a, b), c
+(a5, b5), c5 = t
+
+print a5.x, b5.x, c5.x
+#        ^ defined: 2
+#              ^ defined: 4
+#                    ^ defined: 6
+
+(a6, (b6, c6)) = (a, (b, c))
+
+print a6.x, b6.x
+#        ^ defined: 2
+#              ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for f0 at line 50. Expected line 3
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for f4 at line 50. Expected line 7
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for f8 at line 50. Expected line 11
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for C1 at line 55. Expected line 14
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m0 at line 55. Expected line 15
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m0 at line 55. Expected line 15
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m4 at line 55. Expected line 19
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m4 at line 55. Expected line 19
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m8 at line 55. Expected line 23
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m8 at line 55. Expected line 23
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for f10 at line 64. Expected line 25
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for f14 at line 64. Expected line 29
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for f18 at line 64. Expected line 33
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for C2 at line 69. Expected line 35
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m0 at line 69. Expected line 36
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m0 at line 69. Expected line 36
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m4 at line 69. Expected line 40
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m4 at line 69. Expected line 40
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m8 at line 69. Expected line 44
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/many_definitions.py
+Error: Resolution failed for m8 at line 69. Expected line 44
+Code snippet:
+#--- path: a.py ---#
+
+def f0(a): return X.a + X.b
+def f1(a): return f0(1)
+def f2(a): return f1(2)
+def f3(a): return f2(3)
+def f4(a): return f3(4)
+def f5(a): return f4(5)
+def f6(a): return f5(6)
+def f7(a): return f6(7)
+def f8(a): return f7(8)
+def f9(a): return f8(9)
+
+class C1:
+    def m0(self, b): return f9(0)
+    def m1(self, b): return self.m0(1)
+    def m2(self, b): return self.m1(2)
+    def m3(self, b): return self.m2(3)
+    def m4(self, b): return self.m3(4)
+    def m5(self, b): return self.m4(5)
+    def m6(self, b): return self.m5(6)
+    def m7(self, b): return self.m6(7)
+    def m8(self, b): return self.m7(8)
+
+def f10(): return C1.m8(0)
+def f11(): return f10(1)
+def f12(): return X.c(2)
+def f13(): return X.c(3)
+def f14(): return x(4)
+def f15(): return x(5)
+def f16(): return x(6)
+def f17(): return x(7)
+def f18(): return x(8)
+
+class C2:
+    def m0(self): return X.d(0)
+    def m1(self): return X.d(1)
+    def m2(self): return X.d(2)
+    def m3(self): return X.d(3)
+    def m4(self): return X.d(4)
+    def m5(self): return X.d(5)
+    def m6(self): return X.d(6)
+    def m7(self): return X.d(7)
+    def m8(self): return X.d(8)
+
+#--- path: main.py ---#
+
+from a import *
+
+print f0(), f4(), f8()
+#     ^ defined: 3
+#           ^ defined: 7
+#                 ^ defined: 11
+
+print C1.m0, C1().m0(), C1.m4, C1().m4, C1.m8, C1.m8
+#     ^ defined: 14
+#        ^ defined: 15
+#                 ^ defined: 15
+#                          ^ defined: 19
+#                                   ^ defined: 19
+#                                          ^ defined: 23
+#                                                 ^ defined: 23
+
+print f10(), f14(), f18()
+#     ^ defined: 25
+#             ^ defined: 29
+#                   ^ defined: 33
+
+print C2.m0, C2().m0(), C2.m4, C2().m4, C2.m8, C2.m8
+#     ^ defined: 35
+#        ^ defined: 36
+#                 ^ defined: 36
+#                          ^ defined: 40
+#                                   ^ defined: 40
+#                                          ^ defined: 44
+#                                                 ^ defined: 44
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/wildcard_import.py
+Error: Resolution failed for a at line 16. Expected line 3
+Code snippet:
+#------ path: one/two.py ------#
+
+a = 1
+b = 2
+
+#------ path: one/three.py ------#
+
+b = 3
+c = 4
+
+#------ path: main.py ---------#
+
+from one.two import *
+from one.three import *
+
+print a
+#     ^ defined: 3
+print b
+#     ^ defined: 8
+print c
+#     ^ defined: 9
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/wildcard_import.py
+Error: Resolution failed for b at line 18. Expected line 8
+Code snippet:
+#------ path: one/two.py ------#
+
+a = 1
+b = 2
+
+#------ path: one/three.py ------#
+
+b = 3
+c = 4
+
+#------ path: main.py ---------#
+
+from one.two import *
+from one.three import *
+
+print a
+#     ^ defined: 3
+print b
+#     ^ defined: 8
+print c
+#     ^ defined: 9
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/wildcard_import.py
+Error: Resolution failed for c at line 20. Expected line 9
+Code snippet:
+#------ path: one/two.py ------#
+
+a = 1
+b = 2
+
+#------ path: one/three.py ------#
+
+b = 3
+c = 4
+
+#------ path: main.py ---------#
+
+from one.two import *
+from one.three import *
+
+print a
+#     ^ defined: 3
+print b
+#     ^ defined: 8
+print c
+#     ^ defined: 9
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imported_functions.py
+Error: Resolution failed for bar at line 16. Expected line 9
+Code snippet:
+#------ path: a.py ------#
+
+def foo(x):
+    return x
+
+#------ path: b.py ------#
+
+class A:
+    bar = 1
+
+#------ path: main.py ---------#
+
+from a import *
+from b import *
+
+foo(A).bar
+#      ^ defined: 9
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/statement_bindings.py
+Error: Resolution failed for b at line 5. Expected line 1
+Code snippet:
+import a.b
+import c.d
+
+with a as x, c as y:
+    print x.b, y.d
+    #     ^ defined: 1, 4
+    #       ^ defined: 1
+    #          ^ defined: 2, 4
+    #            ^ defined: 2
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/statement_bindings.py
+Error: Resolution failed for d at line 5. Expected line 2
+Code snippet:
+import a.b
+import c.d
+
+with a as x, c as y:
+    print x.b, y.d
+    #     ^ defined: 1, 4
+    #       ^ defined: 1
+    #          ^ defined: 2, 4
+    #            ^ defined: 2
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/relative_imports.py
+Error: Resolution failed for A at line 8. Expected line 26
+Code snippet:
+#------ path: foo/bar/main.py ------#
+
+from . import a
+from .b import B
+from ..c import see
+from ..c.d import D
+
+print a.A
+#     ^ defined: 3, 25
+#       ^ defined: 26
+
+print B.bee
+#     ^ defined: 4, 31
+#       ^ defined: 32
+
+print see()
+#     ^ defined: 5, 37
+
+
+print D.d
+#       ^ defined: 44
+
+#------ path: foo/bar/a.py --------#
+
+# module
+A = "a"
+
+#------ path: foo/bar/b.py --------#
+
+# module
+class B:
+    bee = 1
+
+#------ path: foo/c.py ------------#
+
+# module
+def see():
+    pass
+
+#------ path: foo/c/d.py ---------#
+
+# module
+class D:
+    d = "d"
+
+#------ path: foo/e/g.py ---#
+
+# module
+G = 1
+
+#------ path: foo/e/__init__.py ---#
+
+# module
+from .g import G
+#              ^ defined: 49
+
+from ..c import see
+#               ^ defined: 37
+
+E = 1
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/relative_imports.py
+Error: Resolution failed for bee at line 12. Expected line 32
+Code snippet:
+#------ path: foo/bar/main.py ------#
+
+from . import a
+from .b import B
+from ..c import see
+from ..c.d import D
+
+print a.A
+#     ^ defined: 3, 25
+#       ^ defined: 26
+
+print B.bee
+#     ^ defined: 4, 31
+#       ^ defined: 32
+
+print see()
+#     ^ defined: 5, 37
+
+
+print D.d
+#       ^ defined: 44
+
+#------ path: foo/bar/a.py --------#
+
+# module
+A = "a"
+
+#------ path: foo/bar/b.py --------#
+
+# module
+class B:
+    bee = 1
+
+#------ path: foo/c.py ------------#
+
+# module
+def see():
+    pass
+
+#------ path: foo/c/d.py ---------#
+
+# module
+class D:
+    d = "d"
+
+#------ path: foo/e/g.py ---#
+
+# module
+G = 1
+
+#------ path: foo/e/__init__.py ---#
+
+# module
+from .g import G
+#              ^ defined: 49
+
+from ..c import see
+#               ^ defined: 37
+
+E = 1
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/relative_imports.py
+Error: Resolution failed for d at line 20. Expected line 44
+Code snippet:
+#------ path: foo/bar/main.py ------#
+
+from . import a
+from .b import B
+from ..c import see
+from ..c.d import D
+
+print a.A
+#     ^ defined: 3, 25
+#       ^ defined: 26
+
+print B.bee
+#     ^ defined: 4, 31
+#       ^ defined: 32
+
+print see()
+#     ^ defined: 5, 37
+
+
+print D.d
+#       ^ defined: 44
+
+#------ path: foo/bar/a.py --------#
+
+# module
+A = "a"
+
+#------ path: foo/bar/b.py --------#
+
+# module
+class B:
+    bee = 1
+
+#------ path: foo/c.py ------------#
+
+# module
+def see():
+    pass
+
+#------ path: foo/c/d.py ---------#
+
+# module
+class D:
+    d = "d"
+
+#------ path: foo/e/g.py ---#
+
+# module
+G = 1
+
+#------ path: foo/e/__init__.py ---#
+
+# module
+from .g import G
+#              ^ defined: 49
+
+from ..c import see
+#               ^ defined: 37
+
+E = 1
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/relative_imports.py
+Error: No Reference Node found at line 54, cols 15-16
+Code snippet:
+#------ path: foo/bar/main.py ------#
+
+from . import a
+from .b import B
+from ..c import see
+from ..c.d import D
+
+print a.A
+#     ^ defined: 3, 25
+#       ^ defined: 26
+
+print B.bee
+#     ^ defined: 4, 31
+#       ^ defined: 32
+
+print see()
+#     ^ defined: 5, 37
+
+
+print D.d
+#       ^ defined: 44
+
+#------ path: foo/bar/a.py --------#
+
+# module
+A = "a"
+
+#------ path: foo/bar/b.py --------#
+
+# module
+class B:
+    bee = 1
+
+#------ path: foo/c.py ------------#
+
+# module
+def see():
+    pass
+
+#------ path: foo/c/d.py ---------#
+
+# module
+class D:
+    d = "d"
+
+#------ path: foo/e/g.py ---#
+
+# module
+G = 1
+
+#------ path: foo/e/__init__.py ---#
+
+# module
+from .g import G
+#              ^ defined: 49
+
+from ..c import see
+#               ^ defined: 37
+
+E = 1
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/relative_imports.py
+Error: No Reference Node found at line 57, cols 16-17
+Code snippet:
+#------ path: foo/bar/main.py ------#
+
+from . import a
+from .b import B
+from ..c import see
+from ..c.d import D
+
+print a.A
+#     ^ defined: 3, 25
+#       ^ defined: 26
+
+print B.bee
+#     ^ defined: 4, 31
+#       ^ defined: 32
+
+print see()
+#     ^ defined: 5, 37
+
+
+print D.d
+#       ^ defined: 44
+
+#------ path: foo/bar/a.py --------#
+
+# module
+A = "a"
+
+#------ path: foo/bar/b.py --------#
+
+# module
+class B:
+    bee = 1
+
+#------ path: foo/c.py ------------#
+
+# module
+def see():
+    pass
+
+#------ path: foo/c/d.py ---------#
+
+# module
+class D:
+    d = "d"
+
+#------ path: foo/e/g.py ---#
+
+# module
+G = 1
+
+#------ path: foo/e/__init__.py ---#
+
+# module
+from .g import G
+#              ^ defined: 49
+
+from ..c import see
+#               ^ defined: 37
+
+E = 1
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/instance_members.py
+Error: Resolution failed for get_all at line 22. Expected line 16
+Code snippet:
+#---- path: a.py -------
+
+class A:
+    def __init__(self, b, c):
+        self.b = b
+        self.c = A(c, 1)
+
+    def get_b(self):
+        return self.b
+        #           ^ defined: 4, 5
+
+    def get_c(self):
+        return self.c
+        #           ^ defined: 6
+
+    def get_all(self):
+        return [self.get_b(), self.get_c()]
+        #            ^ defined: 8
+        #                          ^ defined: 12
+
+a = A(1, 2)
+a.get_all()
+# ^ defined: 16
+
+a.b
+# ^ defined: 4, 5
+
+a.c.b
+#   ^ defined: 4, 5
+# ^ defined: 6
+
+#----- path: main.py ---------
+
+import a
+
+print a.A, a.a
+#       ^ defined: 3
+#            ^ defined: 21
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/instance_members.py
+Error: Resolution failed for b at line 25. Expected line 4
+Code snippet:
+#---- path: a.py -------
+
+class A:
+    def __init__(self, b, c):
+        self.b = b
+        self.c = A(c, 1)
+
+    def get_b(self):
+        return self.b
+        #           ^ defined: 4, 5
+
+    def get_c(self):
+        return self.c
+        #           ^ defined: 6
+
+    def get_all(self):
+        return [self.get_b(), self.get_c()]
+        #            ^ defined: 8
+        #                          ^ defined: 12
+
+a = A(1, 2)
+a.get_all()
+# ^ defined: 16
+
+a.b
+# ^ defined: 4, 5
+
+a.c.b
+#   ^ defined: 4, 5
+# ^ defined: 6
+
+#----- path: main.py ---------
+
+import a
+
+print a.A, a.a
+#       ^ defined: 3
+#            ^ defined: 21
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/instance_members.py
+Error: Resolution failed for c at line 28. Expected line 6
+Code snippet:
+#---- path: a.py -------
+
+class A:
+    def __init__(self, b, c):
+        self.b = b
+        self.c = A(c, 1)
+
+    def get_b(self):
+        return self.b
+        #           ^ defined: 4, 5
+
+    def get_c(self):
+        return self.c
+        #           ^ defined: 6
+
+    def get_all(self):
+        return [self.get_b(), self.get_c()]
+        #            ^ defined: 8
+        #                          ^ defined: 12
+
+a = A(1, 2)
+a.get_all()
+# ^ defined: 16
+
+a.b
+# ^ defined: 4, 5
+
+a.c.b
+#   ^ defined: 4, 5
+# ^ defined: 6
+
+#----- path: main.py ---------
+
+import a
+
+print a.A, a.a
+#       ^ defined: 3
+#            ^ defined: 21
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/instance_members.py
+Error: Mismatch for a at line 36. Resolved to line 1, Expected [21]. (Def Node: POP:a - (0, 0))
+Code snippet:
+#---- path: a.py -------
+
+class A:
+    def __init__(self, b, c):
+        self.b = b
+        self.c = A(c, 1)
+
+    def get_b(self):
+        return self.b
+        #           ^ defined: 4, 5
+
+    def get_c(self):
+        return self.c
+        #           ^ defined: 6
+
+    def get_all(self):
+        return [self.get_b(), self.get_c()]
+        #            ^ defined: 8
+        #                          ^ defined: 12
+
+a = A(1, 2)
+a.get_all()
+# ^ defined: 16
+
+a.b
+# ^ defined: 4, 5
+
+a.c.b
+#   ^ defined: 4, 5
+# ^ defined: 6
+
+#----- path: main.py ---------
+
+import a
+
+print a.A, a.a
+#       ^ defined: 3
+#            ^ defined: 21
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/chained_functions.py
+Error: Resolution failed for x at line 21. Expected line 3
+Code snippet:
+class A:
+    w = 1
+    x = 2
+    y = 3
+    z = 4
+
+def get_a():
+    return A
+def get_b():
+    return get_a()
+def get_c():
+    return get_b()
+def get_d():
+    return get_c()
+def get_e():
+    return get_d()
+def get_f():
+    return get_e()
+
+g = get_f(A)
+print g.x, g.y
+#       ^ defined: 3
+#            ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/chained_functions.py
+Error: Resolution failed for y at line 21. Expected line 4
+Code snippet:
+class A:
+    w = 1
+    x = 2
+    y = 3
+    z = 4
+
+def get_a():
+    return A
+def get_b():
+    return get_a()
+def get_c():
+    return get_b()
+def get_d():
+    return get_c()
+def get_e():
+    return get_d()
+def get_f():
+    return get_e()
+
+g = get_f(A)
+print g.x, g.y
+#       ^ defined: 3
+#            ^ defined: 4
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports.py
+Error: No Reference Node found at line 17, cols 9-10
+Code snippet:
+#------ path: one/two.py -----------#
+
+# module
+import a.b.c
+
+d = 1
+
+e = a.b
+
+#------ path: three/__init__.py ---#
+
+# module
+f = 3
+
+#------ path: main.py -------------#
+
+from one.two import d, e.c
+#        ^ defined: 3
+#                   ^ defined: 6
+#                      ^ defined: 4, 8
+
+import three
+#      ^ defined: 12
+
+print(d, e.c)
+#     ^ defined: 6, 17
+#          ^ defined: 4, 17
+
+print three.f
+#     ^ defined: 12, 22
+#           ^ defined: 13
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports.py
+Error: No Reference Node found at line 17, cols 20-21
+Code snippet:
+#------ path: one/two.py -----------#
+
+# module
+import a.b.c
+
+d = 1
+
+e = a.b
+
+#------ path: three/__init__.py ---#
+
+# module
+f = 3
+
+#------ path: main.py -------------#
+
+from one.two import d, e.c
+#        ^ defined: 3
+#                   ^ defined: 6
+#                      ^ defined: 4, 8
+
+import three
+#      ^ defined: 12
+
+print(d, e.c)
+#     ^ defined: 6, 17
+#          ^ defined: 4, 17
+
+print three.f
+#     ^ defined: 12, 22
+#           ^ defined: 13
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports.py
+Error: No Reference Node found at line 17, cols 23-24
+Code snippet:
+#------ path: one/two.py -----------#
+
+# module
+import a.b.c
+
+d = 1
+
+e = a.b
+
+#------ path: three/__init__.py ---#
+
+# module
+f = 3
+
+#------ path: main.py -------------#
+
+from one.two import d, e.c
+#        ^ defined: 3
+#                   ^ defined: 6
+#                      ^ defined: 4, 8
+
+import three
+#      ^ defined: 12
+
+print(d, e.c)
+#     ^ defined: 6, 17
+#          ^ defined: 4, 17
+
+print three.f
+#     ^ defined: 12, 22
+#           ^ defined: 13
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports.py
+Error: No Reference Node found at line 22, cols 7-8
+Code snippet:
+#------ path: one/two.py -----------#
+
+# module
+import a.b.c
+
+d = 1
+
+e = a.b
+
+#------ path: three/__init__.py ---#
+
+# module
+f = 3
+
+#------ path: main.py -------------#
+
+from one.two import d, e.c
+#        ^ defined: 3
+#                   ^ defined: 6
+#                      ^ defined: 4, 8
+
+import three
+#      ^ defined: 12
+
+print(d, e.c)
+#     ^ defined: 6, 17
+#          ^ defined: 4, 17
+
+print three.f
+#     ^ defined: 12, 22
+#           ^ defined: 13
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports.py
+Error: Resolution failed for f at line 29. Expected line 13
+Code snippet:
+#------ path: one/two.py -----------#
+
+# module
+import a.b.c
+
+d = 1
+
+e = a.b
+
+#------ path: three/__init__.py ---#
+
+# module
+f = 3
+
+#------ path: main.py -------------#
+
+from one.two import d, e.c
+#        ^ defined: 3
+#                   ^ defined: 6
+#                      ^ defined: 4, 8
+
+import three
+#      ^ defined: 12
+
+print(d, e.c)
+#     ^ defined: 6, 17
+#          ^ defined: 4, 17
+
+print three.f
+#     ^ defined: 12, 22
+#           ^ defined: 13
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/redundant_reexport.py
+Error: Resolution failed for f at line 14. Expected line 7
+Code snippet:
+#--- path: a/__init__.py ---#
+
+from . import child
+
+#--- path: a/child.py ----
+
+def f():
+    pass
+
+#--- path: main.py ---#
+
+import a
+
+print a.child.f()
+#             ^ defined: 7
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/superclasses.py
+Error: Resolution failed for some_attr at line 10. Expected line 3
+Code snippet:
+class A:
+    def __init__(self):
+        self.some_attr = 2
+
+    def some_method(self):
+        print self
+
+class B(A):
+    def method2(self):
+        print self.some_attr, self.some_method()
+        #          ^ defined: 3
+        #                          ^ defined: 5, 14
+
+    def some_method(self):
+        pass
+
+    def other(self):
+        super().some_method()
+        #       ^ defined: 5
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/superclasses.py
+Error: Mismatch for some_method at line 18. Resolved to line 14, Expected [5]. (Def Node: POP:some_method - (285, 296))
+Code snippet:
+class A:
+    def __init__(self):
+        self.some_attr = 2
+
+    def some_method(self):
+        print self
+
+class B(A):
+    def method2(self):
+        print self.some_attr, self.some_method()
+        #          ^ defined: 3
+        #                          ^ defined: 5, 14
+
+    def some_method(self):
+        pass
+
+    def other(self):
+        super().some_method()
+        #       ^ defined: 5
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/class_members.py
+Error: Resolution failed for a at line 4. Expected line 1
+Code snippet:
+a = 1
+
+class B:
+    c = a
+    #   ^ defined: 1
+
+    def d(self):
+        return self.c
+
+    class E:
+        f = a
+        #   ^ defined: 1
+
+print B.c
+#     ^ defined: 3
+#       ^ defined: 1, 4
+
+print B.d(1)
+#       ^ defined: 7
+
+print B.a, E.a
+#       ^ defined:
+#            ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/class_members.py
+Error: Resolution failed for a at line 11. Expected line 1
+Code snippet:
+a = 1
+
+class B:
+    c = a
+    #   ^ defined: 1
+
+    def d(self):
+        return self.c
+
+    class E:
+        f = a
+        #   ^ defined: 1
+
+print B.c
+#     ^ defined: 3
+#       ^ defined: 1, 4
+
+print B.d(1)
+#       ^ defined: 7
+
+print B.a, E.a
+#       ^ defined:
+#            ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/decorators.py
+Error: Resolution failed for deprecated at line 5. Expected line 1
+Code snippet:
+from a import deprecated
+from b import ignore_warnings
+
+class A:
+    @deprecated
+    # ^ defined: 1
+    @ignore_warnings.all
+    # ^ defined: 2
+    def b(self):
+        pass
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/decorators.py
+Error: Resolution failed for ignore_warnings at line 7. Expected line 2
+Code snippet:
+from a import deprecated
+from b import ignore_warnings
+
+class A:
+    @deprecated
+    # ^ defined: 1
+    @ignore_warnings.all
+    # ^ defined: 2
+    def b(self):
+        pass
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_module_aliased.py
+Error: Resolution failed for FOO at line 9. Expected line 3
+Code snippet:
+# --- path: foo.py ---
+
+FOO = 42
+
+# --- path: test.py ---
+
+import foo as qux
+
+qux.FOO
+# ^ defined: 7, 3
+#     ^ defined: 3
+
+foo
+# ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_from_super_package_a_value.py
+Error: No Reference Node found at line 9, cols 2-3
+Code snippet:
+# --- path: foo/__init__.py ---
+
+FOO = 42
+
+# --- path: foo/bar/test.py ---
+
+from .. import FOO
+
+FOO
+# ^ defined: 7, 3
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_from_super_package_submodule_a_value.py
+Error: No Reference Node found at line 9, cols 2-3
+Code snippet:
+# --- path: foo/bar.py ---
+
+BAR = 42
+
+# --- path: foo/baz/test.py ---
+
+from ..bar import BAR
+
+BAR
+# ^ defined: 7, 3
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_from_this_package_a_value.py
+Error: No Reference Node found at line 9, cols 2-3
+Code snippet:
+# --- path: foo/__init__.py ---
+
+FOO = 42
+
+# --- path: foo/test.py ---
+
+from . import FOO
+
+FOO
+# ^ defined: 7, 3
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_from_this_package_submodule_a_value.py
+Error: No Reference Node found at line 9, cols 2-3
+Code snippet:
+# --- path: foo/bar.py ---
+
+BAR = 42
+
+# --- path: foo/test.py ---
+
+from .bar import BAR
+
+BAR
+# ^ defined: 7, 3
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_from_module_a_value.py
+Error: No Reference Node found at line 9, cols 2-3
+Code snippet:
+# --- path: foo.py ---
+
+FOO = 42
+
+# --- path: test.py ---
+
+from foo import FOO
+
+FOO
+# ^ defined: 7, 3
+
+foo
+# ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_submodule_aliased.py
+Error: Resolution failed for BAR at line 9. Expected line 3
+Code snippet:
+# --- path: foo/bar.py ---
+
+BAR = 42
+
+# --- path: test.py ---
+
+import foo.bar as qux
+
+qux.BAR
+# ^ defined: 7, 3
+#     ^ defined: 3
+
+foo
+# ^ defined:
+
+bar
+# ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_from_module_wildcard.py
+Error: No Reference Node found at line 9, cols 2-3
+Code snippet:
+# --- path: foo.py ---
+
+FOO = 42
+
+# --- path: test.py ---
+
+from foo import *
+
+FOO
+# ^ defined: 3
+
+foo
+# ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_from_module_a_submodule.py
+Error: Resolution failed for BAR at line 9. Expected line 3
+Code snippet:
+# --- path: foo/bar.py ---
+
+BAR = 42
+
+# --- path: test.py ---
+
+from foo import bar
+
+bar.BAR
+# ^ defined: 7, 3
+#     ^ defined: 3
+
+foo
+# ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_from_module_a_value_aliased.py
+Error: No Reference Node found at line 9, cols 2-3
+Code snippet:
+# --- path: foo.py ---
+
+FOO = 42
+
+# --- path: test.py ---
+
+from foo import FOO as QUX
+
+QUX
+# ^ defined: 7, 3
+
+FOO
+# ^ defined:
+
+----------------------------------------
+File: stack-graphs-main/languages/tree-sitter-stack-graphs-python/test/imports/import_from_submodule_a_value.py
+Error: No Reference Node found at line 9, cols 2-3
+Code snippet:
+# --- path: foo/bar.py ---
+
+BAR = 42
+
+# --- path: test.py ---
+
+from foo.bar import BAR
+
+BAR
+# ^ defined: 7, 3
+
+foo
+# ^ defined:
+
+bar
+# ^ defined:
+

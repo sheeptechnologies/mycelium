@@ -319,8 +319,8 @@ class TestResolverAPI:
     def test_resolver_default_limits(self):
         """Test resolver default limits."""
         resolver = ReferenceResolver()
-        assert resolver.max_depth == 1000
-        assert resolver.max_paths == 100
+        assert resolver.max_depth == 200000
+        assert resolver.max_paths == 200000
     
     def test_find_reference_by_position(self, tmp_path):
         """Test finding reference by line/column position."""

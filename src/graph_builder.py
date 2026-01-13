@@ -6,6 +6,7 @@ for creating stack graphs from source files or code strings.
 """
 
 import logging
+import re
 from pathlib import Path
 from typing import List, Optional
 
@@ -91,12 +92,46 @@ class StackGraphBuilder:
         
         try:
             tree = self.parser.parse(code.encode('utf-8'))
-            return self.build_from_tree(tree)
+            return self.build_from_tree(tree, code)
         except Exception as e:
             logger.error(f"Error parsing code: {e}")
             raise RuntimeError(f"Failed to parse code: {e}")
+
+    def _parse_module_sections(self, code: str):
+        sections = []
+        offset = 0
+        current = None
+        for line in code.splitlines(keepends=True):
+            match = re.match(r'#\s*-+\s*path:\s*(.+?)\s*-*\s*$', line)
+            if match:
+                if current:
+                    current["end"] = offset
+                module_path = self._module_path_from_file(match.group(1).strip())
+                current = {
+                    "start": offset + len(line),
+                    "end": None,
+                    "module_path": module_path,
+                }
+                sections.append(current)
+            offset += len(line)
+        if current:
+            current["end"] = len(code)
+        return sections
+
+    def _module_path_from_file(self, path: str) -> List[str]:
+        parts = [p for p in path.replace('\\n', '').split('/') if p]
+        if not parts:
+            return []
+        filename = parts[-1]
+        if filename.endswith('.py'):
+            filename = filename[:-3]
+        if filename == '__init__':
+            parts = parts[:-1]
+        else:
+            parts[-1] = filename
+        return [p for p in parts if p]
     
-    def build_from_tree(self, tree: Tree) -> List[GNode]:
+    def build_from_tree(self, tree: Tree, code: Optional[str] = None) -> List[GNode]:
         """
         Build a stack graph from a Tree-sitter Tree object.
         
@@ -126,6 +161,10 @@ class StackGraphBuilder:
             
             # Build graph
             builder = GraphBuilder()
+            if code:
+                sections = self._parse_module_sections(code)
+                if sections:
+                    builder.set_module_sections(sections)
             root_nodes = builder.build(captures, handler_map)
             
             logger.info(f"Built stack graph with {len(root_nodes)} root node(s)")
