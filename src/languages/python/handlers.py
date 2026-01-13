@@ -74,11 +74,25 @@ def handle_class_definition(builder:GraphBuilder, node:Any, children:list[GNode]
     if superclasses_field:
         superclasses = node_in_byte_range(superclasses_field.byte_range, children or [])
         if superclasses:
-            superclass_dot_node = _handle_class_superclasses(builder, superclasses)
-            if superclass_dot_node:
-                scope_node.children.append(superclass_dot_node)
-                superclass_dot_node.parent.append(scope_node)
-
+            # superclasses is usually an argument_list SCOPE node containing (A, B)
+            # We need to process each superclass identifier individually
+            supers_to_process = []
+            if superclasses.symbol == 'argument_list':
+                 # Filter children skipping punctuation
+                 supers_to_process = [
+                     child for child in superclasses.children 
+                     if child.symbol not in ['(', ')', ',']
+                 ]
+            else:
+                # Fallback if it's a single identifier (if syntax allows class A(B) without parens? No, but maybe just B?)
+                supers_to_process = [superclasses]
+            
+            for sc in supers_to_process:
+                superclass_dot_node = _handle_class_superclasses(builder, sc)
+                if superclass_dot_node:
+                    scope_node.children.append(superclass_dot_node)
+                    superclass_dot_node.parent.append(scope_node)
+            
     scope_node.children += body_nodes
     for n in body_nodes:
         n.parent.append(scope_node)
@@ -95,7 +109,7 @@ def handle_class_definition(builder:GraphBuilder, node:Any, children:list[GNode]
 
     return class_scope
 
-def _hande_class_self(class_scope: GNode):
+def _handle_class_self(class_scope: GNode):
     # POP
     self_pop_node = GNode(
         symbol="self",
@@ -172,7 +186,7 @@ def _handle_class_name(builder:GraphBuilder, name_node:GNode, children:list[GNod
     )
     class_dot.children.append(class_scope)
 
-    _hande_class_self(class_scope)
+    _handle_class_self(class_scope)
     return name_node,class_scope
 
 def _handle_class_superclasses(builder:GraphBuilder, name_node:Any, children:list[GNode]=None):
@@ -253,12 +267,23 @@ def handle_function_definition(builder:GraphBuilder, node:Any, children:list[GNo
     name_node.parent.append(function_node)
     link_children(function_node, body)
 
+    param_names = []
     parameters_field = node.child_by_field_name("parameters")
     if parameters_field:
         parameters = nodes_in_byte_range(parameters_field.byte_range, children or [])
         if parameters:
             function_node.children += parameters
             link_children(function_node, parameters)
+            for param in parameters:
+                if getattr(param, 'ctx', None) == 'identifier' and param.type == 'POP':
+                    param_names.append(param.symbol)
+
+    if param_names:
+        builder.function_params[name_node.symbol] = param_names
+
+    return_descriptor = _extract_return_descriptor(node, set(param_names))
+    if return_descriptor:
+        builder.function_returns[name_node.symbol] = return_descriptor
 
     return_type_field = node.child_by_field_name("return_type")
     if return_type_field:
@@ -271,12 +296,27 @@ def handle_function_definition(builder:GraphBuilder, node:Any, children:list[GNo
     return function_node
 
 def handle_return_statement(builder:GraphBuilder, node:Any, children:list[GNode]=None):
-    
-    for c in children:
-        if c.ctx == 'identifier':
-            c.type = 'PUSH'
+    """
+    Handle return statement: return value
+    Return value nodes are marked as PUSH (references).
+    """
+    # Extract the value field from the return statement
+    value_field = node.child_by_field_name("value")
+    if not value_field:
+        # Empty return statement (return with no value)
+        return []
 
-    return children
+    # Find nodes within the value's byte range
+    value_nodes = nodes_in_byte_range(
+        (value_field.start_byte, value_field.end_byte),
+        children or []
+    )
+
+    if value_nodes:
+        # Mark all value nodes as PUSH (references)
+        propagate_type(value_nodes, 'PUSH')
+
+    return value_nodes
 
 def handle_typed_default_parameter(builder:GraphBuilder, node:Any, children:list[GNode]=None):
     if not children or len(children) < 2:
@@ -357,6 +397,34 @@ def handle_expression_statement_assignment(builder:GraphBuilder, node:Any, child
     link_children(expr_scope, children)
     return expr_scope
 
+def handle_expression_statement(builder:GraphBuilder, node:Any, children:list[GNode]=None):
+    """
+    Handle: standalone expression statements.
+    Mark contained identifiers as references without adding extra scopes.
+    """
+    if children:
+        propagate_push_preserving_pop(children)
+    return children or []
+
+def handle_print_statement(builder:GraphBuilder, node:Any, children:list[GNode]=None):
+    """
+    Handle: print a, b (Python 2) or print(a, b) (Python 3 prints can be calls).
+    Ensures printed expressions are treated as references.
+    """
+    if children:
+        propagate_type(children, 'PUSH')
+
+    print_scope = GNode(
+        symbol="print_statement",
+        type="SCOPE",
+        ctx="print_statement",
+        start_byte=node.start_byte,
+        end_byte=node.end_byte,
+        children=children or []
+    )
+    link_children(print_scope, children or [])
+    return print_scope
+
 def handle_assignment(builder:GraphBuilder, node:Any, children:list[GNode]=None):
     left_node_field = node.child_by_field_name("left")
     right_node_field = node.child_by_field_name("right")
@@ -402,7 +470,7 @@ def handle_assignment(builder:GraphBuilder, node:Any, children:list[GNode]=None)
 
 def handle_call(builder:GraphBuilder, node:Any, children:list[GNode]=None):
     if children:
-        propagate_type(children, 'PUSH')
+        propagate_type_filtered(children, 'PUSH', {'lambda', 'lambda_parameters'})
     
     function_node = node.child_by_field_name("function")
     if not function_node:
@@ -429,18 +497,18 @@ def handle_call(builder:GraphBuilder, node:Any, children:list[GNode]=None):
         )
     
     function.ctx = 'call_name'
-    x = function
-    while x and len(x.children) > 0:
-        x = x.children[0]
+    # x = function
+    # while x and len(x.children) > 0:
+    #     x = x.children[0]
 
-    if x:
-        x.children.append(GNode(
-            symbol="()",
-            type="PUSH",
-            ctx="call_braket",
-            start_byte=node.start_byte,
-            end_byte=node.end_byte,
-        ))
+    # if x:
+    #     x.children.append(GNode(
+    #         symbol="()",
+    #         type="PUSH",
+    #         ctx="call_braket",
+    #         start_byte=node.start_byte,
+    #         end_byte=node.end_byte,
+    #     ))
     
     arguments_node = node.child_by_field_name("arguments")
     arguments = []
@@ -458,6 +526,81 @@ def handle_call(builder:GraphBuilder, node:Any, children:list[GNode]=None):
         children=call_children
     )
     link_children(call_node, call_children)
+
+    function_name = None
+    if function and getattr(function, 'ctx', None) == 'call_name':
+        function_name = function.symbol
+
+    if function_name and function_name in builder.function_returns:
+        param_names = builder.function_params.get(function_name, [])
+        return_desc = builder.function_returns[function_name]
+
+        positional_args = []
+        keyword_args = {}
+        if arguments_node:
+            for arg in arguments_node.named_children:
+                if arg.type == 'keyword_argument':
+                    key_node = arg.child_by_field_name('name')
+                    value_node = arg.child_by_field_name('value')
+                    if key_node and value_node:
+                        key = key_node.text.decode('utf-8')
+                        value_gnode = node_in_byte_range_recursive(value_node.byte_range, children or [])
+                        if value_gnode:
+                            keyword_args[key] = value_gnode
+                    continue
+
+                arg_gnode = node_in_byte_range_recursive(arg.byte_range, children or [])
+                if arg_gnode:
+                    positional_args.append(arg_gnode)
+
+        def get_arg_for_param(param_name: str):
+            if param_name in keyword_args:
+                return keyword_args[param_name]
+            if param_name in param_names:
+                idx = param_names.index(param_name)
+                if idx < len(positional_args):
+                    return positional_args[idx]
+            return None
+
+        if return_desc[0] == 'param':
+            arg_node = get_arg_for_param(return_desc[1])
+            if arg_node:
+                call_node.children.append(arg_node)
+                arg_node.parent.append(call_node)
+        elif return_desc[0] == 'name':
+            name_node = GNode(
+                symbol=return_desc[1],
+                type="PUSH",
+                ctx="identifier",
+                start_byte=node.start_byte,
+                end_byte=node.end_byte,
+            )
+            call_node.children.append(name_node)
+            name_node.parent.append(call_node)
+        elif return_desc[0] == 'attr':
+            arg_node = get_arg_for_param(return_desc[1])
+            if arg_node:
+                attr_node = GNode(
+                    symbol=return_desc[2],
+                    type="PUSH",
+                    ctx="identifier",
+                    start_byte=node.start_byte,
+                    end_byte=node.end_byte,
+                )
+                dot_node = GNode(
+                    symbol=".",
+                    type="PUSH",
+                    ctx="attribute_dot",
+                    start_byte=node.start_byte,
+                    end_byte=node.end_byte,
+                    children=[arg_node]
+                )
+                arg_node.parent.append(dot_node)
+                attr_node.children.append(dot_node)
+                dot_node.parent.append(attr_node)
+                call_node.children.append(attr_node)
+                attr_node.parent.append(call_node)
+
     return call_node
 
 def append_in_graph(root,node):
@@ -481,81 +624,30 @@ def append_in_graph(root,node):
         node.parent.append(leaf)
 
 
-def handle_attribute(builder:GraphBuilder, node:Any, children:list[GNode]=None):
-    if children:
-        propagate_type(children, 'PUSH')
-    
-    object_node_field = node.child_by_field_name("object")
-    attribute_node_field = node.child_by_field_name("attribute")
-    
-    if not object_node_field or not attribute_node_field:
-        logger.warning(f"attribute node missing object or attribute field at {node.start_byte}")
-        return GNode(
-            symbol="attribute",
-            type="SCOPE",
-            ctx="attribute",
-            start_byte=node.start_byte,
-            end_byte=node.end_byte,
-            children=children or []
-        )
-    
-    object = node_in_byte_range(object_node_field.byte_range, children or [])
-    attribute = node_in_byte_range(attribute_node_field.byte_range, children or [])
-    
-    if not object or not attribute:
-        logger.warning(f"attribute: object or attribute not found in children at {node.start_byte}")
-        return object or attribute or GNode(
-            symbol="attribute",
-            type="SCOPE",
-            ctx="attribute",
-            start_byte=node.start_byte,
-            end_byte=node.end_byte,
-            children=children or []
-        )
-
-    n = GNode(
-        symbol=".",
-        ctx="attribute_dot",
-        type="PUSH",
-        start_byte=node.start_byte,
-        end_byte=node.end_byte,
-        children=[attribute]
-    )
-
-    if hasattr(object, 'ctx') and object.ctx == 'identifier':
-        append_in_graph(object, n)
-        return object
-    elif hasattr(object, 'ctx') and object.ctx == 'call':
-        object_children = []
-        object_node = None
-        for c in object.children:
-            if hasattr(c, 'ctx') and c.ctx == 'call_name':
-                object_node = c
-            else: 
-                object_children.append(c)
-        
-        if object_node:
-            x = object_node
-            while x and len(x.children) > 0:
-                x = x.children[0]
-            
-            if x:
-                x.children.append(n)
-            
-            return [object_node] + object_children
-    
-    return object
-
-
 def handle_lambda(builder:GraphBuilder, node:Any, children:list[GNode]=None):
-    
-    return GNode(
+    if children:
+        params_nodes = []
+        body_nodes = []
+        for child in children:
+            if getattr(child, 'ctx', None) == 'lambda_parameters':
+                params_nodes.append(child)
+            else:
+                body_nodes.append(child)
+
+        if params_nodes:
+            set_identifier_type(params_nodes, 'POP')
+        if body_nodes:
+            propagate_type(body_nodes, 'PUSH')
+
+    lambda_scope = GNode(
         symbol="lambda",
         type="SCOPE",
         start_byte=node.start_byte,
         end_byte=node.end_byte,
         children=children
     )
+    link_children(lambda_scope, children or [])
+    return lambda_scope
 
 def propagate_type(start_nodes: list[GNode], new_type: str):
     """
@@ -597,6 +689,75 @@ def propagate_type(start_nodes: list[GNode], new_type: str):
         if current_node.children:
             stack.extend(current_node.children)
 
+def set_identifier_type(start_nodes: list[GNode], new_type: str):
+    """
+    Walk a subtree and set identifier node types without affecting scope nodes.
+    """
+    if not start_nodes:
+        return
+
+    visited = set()
+    stack = list(start_nodes)
+    while stack:
+        current_node = stack.pop()
+        if current_node is None:
+            continue
+        if id(current_node) in visited:
+            continue
+        visited.add(id(current_node))
+
+        if getattr(current_node, 'ctx', None) == 'identifier' and current_node.type != "SCOPE":
+            current_node.type = new_type
+
+        if current_node.children:
+            stack.extend(current_node.children)
+
+def propagate_type_filtered(start_nodes: list[GNode], new_type: str, exclude_ctx: set[str]):
+    if not start_nodes:
+        return
+
+    visited = set()
+    stack = list(start_nodes)
+    while stack:
+        current_node = stack.pop()
+        if current_node is None:
+            continue
+        if id(current_node) in visited:
+            continue
+        visited.add(id(current_node))
+
+        if getattr(current_node, 'ctx', None) in exclude_ctx:
+            continue
+
+        if current_node.type != "SCOPE":
+            current_node.type = new_type
+
+        if current_node.children:
+            stack.extend(current_node.children)
+
+def propagate_push_preserving_pop(start_nodes: list[GNode]):
+    if not start_nodes:
+        return
+
+    visited = set()
+    stack = list(start_nodes)
+    while stack:
+        current_node = stack.pop()
+        if current_node is None:
+            continue
+        if id(current_node) in visited:
+            continue
+        visited.add(id(current_node))
+
+        if current_node.type == 'POP':
+            continue
+
+        if current_node.type != "SCOPE":
+            current_node.type = "PUSH"
+
+        if current_node.children:
+            stack.extend(current_node.children)
+
 def node_in_byte_range(range, nodes):
     """Find a node within the given byte range."""
     if not range or not nodes:
@@ -612,6 +773,18 @@ def node_in_byte_range(range, nodes):
             if n.start_byte >= range_start and n.end_byte <= range_end:
                 return n
 
+    return None
+
+def node_in_byte_range_recursive(range, nodes):
+    """Find a node within the given byte range, searching recursively."""
+    direct = node_in_byte_range(range, nodes)
+    if direct:
+        return direct
+    for n in nodes:
+        if n and n.children:
+            found = node_in_byte_range_recursive(range, n.children)
+            if found:
+                return found
     return None
 
 def nodes_in_byte_range(range, nodes):
@@ -632,6 +805,66 @@ def nodes_in_byte_range(range, nodes):
 
     return res
 
+def _find_first_return_node(node: Any):
+    if node is None:
+        return None
+    if node.type == 'return_statement':
+        return node
+    for child in node.children:
+        found = _find_first_return_node(child)
+        if found:
+            return found
+    return None
+
+def _extract_return_descriptor(node: Any, param_names: set[str]):
+    """
+    Extract a simple return descriptor from a function definition AST node.
+    Returns:
+        ('param', name) or ('attr', param_name, attr_name) or None
+    """
+    body = node.child_by_field_name("body")
+    return_node = _find_first_return_node(body)
+    if not return_node:
+        return None
+
+    expr = None
+    for child in return_node.children:
+        if child.is_named:
+            expr = child
+            break
+    if not expr:
+        return None
+
+    if expr.type == 'identifier':
+        name = expr.text.decode('utf-8')
+        if name in param_names:
+            return ('param', name)
+        return ('name', name)
+
+    if expr.type == 'attribute':
+        obj = expr.child_by_field_name("object")
+        attr = expr.child_by_field_name("attribute")
+        if not obj or not attr:
+            return None
+        if obj.type != 'identifier' or attr.type != 'identifier':
+            return None
+        obj_name = obj.text.decode('utf-8')
+        attr_name = attr.text.decode('utf-8')
+        if obj_name in param_names:
+            return ('attr', obj_name, attr_name)
+        return None
+
+    return None
+
+def _dotted_name_segments(node: Any) -> list[str]:
+    segments = []
+    if not node:
+        return segments
+    for child in node.children:
+        if child.type == 'identifier':
+            segments.append(child.text.decode('utf-8'))
+    return segments
+
 # ==========================================================================
 # ============================= IMPORTS ====================================
 # ==========================================================================
@@ -641,58 +874,270 @@ def handle_import_statement(builder:GraphBuilder, node:Any, children:list[GNode]
     Handle: import module.submodule
     Creates PUSH chain for module path and POP for root module name definition.
     """
-    name_node = node.child_by_field_name("name")
-    if not name_node:
-        logger.warning(f"import_statement missing name field at {node.start_byte}")
-        return GNode(
-            symbol="import_statement",
-            type="SCOPE",
-            start_byte=node.start_byte,
-            end_byte=node.end_byte,
-            children=children or []
+    def build_pop_chain(segments: list[str], start_byte: int, end_byte: int, ctx: str):
+        if not segments:
+            return None, None
+        root = GNode(
+            symbol=segments[0],
+            type="POP",
+            ctx=ctx,
+            start_byte=start_byte,
+            end_byte=end_byte,
         )
-    
-    # Find dotted_name in children
-    dotted_name_node = node_in_byte_range(name_node.byte_range, children or [])
-    
-    # Create import scope
-    import_scope = GNode(
+        current = root
+        for seg in segments[1:]:
+            dot_node = GNode(
+                symbol=".",
+                type="POP",
+                ctx=f"{ctx}_dot",
+                start_byte=start_byte,
+                end_byte=end_byte,
+            )
+            next_node = GNode(
+                symbol=seg,
+                type="POP",
+                ctx=ctx,
+                start_byte=start_byte,
+                end_byte=end_byte,
+            )
+            current.children.append(dot_node)
+            dot_node.parent.append(current)
+            dot_node.children.append(next_node)
+            next_node.parent.append(dot_node)
+            current = next_node
+        return root, current
+
+    import_nodes = []
+    for child in node.named_children:
+        if child.type == 'aliased_import':
+            name_node = child.child_by_field_name("name")
+            alias_node = child.child_by_field_name("alias")
+            segments = _dotted_name_segments(name_node)
+            if not alias_node or not segments:
+                continue
+            alias_name = alias_node.text.decode('utf-8')
+            alias_gnode = GNode(
+                symbol=alias_name,
+                type="POP",
+                ctx="import_alias",
+                start_byte=alias_node.start_byte,
+                end_byte=alias_node.end_byte,
+            )
+            root_node, leaf_node = build_pop_chain(segments, name_node.start_byte, name_node.end_byte, "import_module")
+            if root_node:
+                alias_gnode.children.append(root_node)
+                root_node.parent.append(alias_gnode)
+                if leaf_node:
+                    module_dot = builder.module_dot_by_path.get(tuple(segments))
+                    if module_dot:
+                        leaf_node.children.append(module_dot)
+                        module_dot.parent.append(leaf_node)
+            import_nodes.append(alias_gnode)
+            continue
+
+        if child.type != 'dotted_name':
+            continue
+        segments = _dotted_name_segments(child)
+        if not segments:
+            continue
+        root_node, leaf_node = build_pop_chain(segments, child.start_byte, child.end_byte, "import_module")
+        if leaf_node:
+            module_dot = builder.module_dot_by_path.get(tuple(segments))
+            if module_dot:
+                leaf_node.children.append(module_dot)
+                module_dot.parent.append(leaf_node)
+        if root_node:
+            import_nodes.append(root_node)
+
+    if import_nodes:
+        return import_nodes
+
+    logger.warning(f"import_statement missing dotted_name at {node.start_byte}")
+    return GNode(
         symbol="import_statement",
         type="SCOPE",
         start_byte=node.start_byte,
         end_byte=node.end_byte,
         children=children or []
     )
-    
-    return import_scope
+
 
 def handle_import_from_statement(builder:GraphBuilder, node:Any, children:list[GNode]=None):
     """
-    Handle: from module import name
-    Creates PUSH chain for module path and POP for imported name definition.
+    Handle: from module import name, name2 as alias
+    Creates PUSH chain for module path and POP for imported name definitions.
     """
-    import_scope = GNode(
-        symbol="import_from_statement",
-        type="SCOPE",
-        start_byte=node.start_byte,
-        end_byte=node.end_byte,
-        children=children or []
-    )
-    
-    return import_scope
+    def build_pop_chain(segments: list[str], start_byte: int, end_byte: int, ctx: str):
+        if not segments:
+            return None, None
+        root = GNode(
+            symbol=segments[0],
+            type="POP",
+            ctx=ctx,
+            start_byte=start_byte,
+            end_byte=end_byte,
+        )
+        current = root
+        for seg in segments[1:]:
+            dot_node = GNode(
+                symbol=".",
+                type="POP",
+                ctx=f"{ctx}_dot",
+                start_byte=start_byte,
+                end_byte=end_byte,
+            )
+            next_node = GNode(
+                symbol=seg,
+                type="POP",
+                ctx=ctx,
+                start_byte=start_byte,
+                end_byte=end_byte,
+            )
+            current.children.append(dot_node)
+            dot_node.parent.append(current)
+            dot_node.children.append(next_node)
+            next_node.parent.append(dot_node)
+            current = next_node
+        return root, current
+
+    def build_push_chain(segments: list[str], start_byte: int, end_byte: int, ctx: str):
+        if not segments:
+            return None
+        root = GNode(
+            symbol=segments[0],
+            type="PUSH",
+            ctx=ctx,
+            start_byte=start_byte,
+            end_byte=end_byte,
+        )
+        current = root
+        for seg in segments[1:]:
+            dot_node = GNode(
+                symbol=".",
+                type="PUSH",
+                ctx=f"{ctx}_dot",
+                start_byte=start_byte,
+                end_byte=end_byte,
+            )
+            next_node = GNode(
+                symbol=seg,
+                type="PUSH",
+                ctx=ctx,
+                start_byte=start_byte,
+                end_byte=end_byte,
+            )
+            current.children.append(dot_node)
+            dot_node.parent.append(current)
+            dot_node.children.append(next_node)
+            next_node.parent.append(dot_node)
+            current = next_node
+        return root
+
+    module_segments = []
+    module_node = node.child_by_field_name("module")
+    if module_node:
+        if module_node.type == 'relative_import':
+            current_path = builder.module_path_for_byte(node.start_byte)
+            prefix_count = 0
+            rel_segments = []
+            for child in module_node.children:
+                if child.type == 'import_prefix':
+                    prefix_text = child.text.decode('utf-8')
+                    prefix_count += len(prefix_text)
+                elif child.type == 'dotted_name':
+                    rel_segments = _dotted_name_segments(child)
+            if prefix_count > 0:
+                base = current_path[:-prefix_count] if prefix_count <= len(current_path) else []
+            else:
+                base = current_path
+            module_segments = base + rel_segments
+        elif module_node.type == 'dotted_name':
+            module_segments = _dotted_name_segments(module_node)
+
+    module_dot = builder.module_dot_by_path.get(tuple(module_segments)) if module_segments else None
+    module_scope = builder.module_scope_by_path.get(tuple(module_segments)) if module_segments else None
+
+    import_nodes = []
+    if module_segments:
+        module_ref = build_push_chain(module_segments, module_node.start_byte, module_node.end_byte, "import_from_module")
+        if module_ref:
+            import_nodes.append(module_ref)
+    for child in node.named_children:
+        if child == module_node:
+            continue
+        if child.type == 'wildcard_import':
+            if module_scope:
+                wildcard_scope = GNode(
+                    symbol="wildcard_import",
+                    type="SCOPE",
+                    ctx="wildcard_import",
+                    start_byte=child.start_byte,
+                    end_byte=child.end_byte,
+                    children=list(module_scope.children),
+                )
+                link_children(wildcard_scope, wildcard_scope.children)
+                import_nodes.append(wildcard_scope)
+            continue
+        if child.type == 'aliased_import':
+            name_node = child.child_by_field_name("name")
+            alias_node = child.child_by_field_name("alias")
+            segments = _dotted_name_segments(name_node)
+            if not alias_node or not segments:
+                continue
+            alias_name = alias_node.text.decode('utf-8')
+            alias_gnode = GNode(
+                symbol=alias_name,
+                type="POP",
+                ctx="import_alias",
+                start_byte=alias_node.start_byte,
+                end_byte=alias_node.end_byte,
+            )
+            root_node, leaf_node = build_pop_chain(segments, name_node.start_byte, name_node.end_byte, "import_from")
+            if root_node:
+                alias_gnode.children.append(root_node)
+                root_node.parent.append(alias_gnode)
+            target_dot = builder.module_dot_by_path.get(tuple(module_segments + segments)) if module_segments else None
+            if leaf_node and target_dot:
+                leaf_node.children.append(target_dot)
+                target_dot.parent.append(leaf_node)
+            elif module_dot and root_node:
+                root_node.children.append(module_dot)
+                module_dot.parent.append(root_node)
+            import_nodes.append(alias_gnode)
+            continue
+        if child.type == 'dotted_name':
+            segments = _dotted_name_segments(child)
+            if not segments:
+                continue
+            root_node, leaf_node = build_pop_chain(segments, child.start_byte, child.end_byte, "import_from")
+            if leaf_node:
+                target_dot = builder.module_dot_by_path.get(tuple(module_segments + segments)) if module_segments else None
+                if target_dot:
+                    leaf_node.children.append(target_dot)
+                    target_dot.parent.append(leaf_node)
+                elif module_dot:
+                    leaf_node.children.append(module_dot)
+                    module_dot.parent.append(leaf_node)
+            if root_node:
+                import_nodes.append(root_node)
+
+    if import_nodes:
+        return import_nodes
+
+    return GNode(symbol="import_from_statement", type="SCOPE", start_byte=node.start_byte, end_byte=node.end_byte, children=children or [])
 
 def handle_dotted_name(builder:GraphBuilder, node:Any, children:list[GNode]=None):
     """
     Handle: module.submodule.name
     Creates chain of PUSH nodes connected by dots.
     """
-    # Extract identifiers from dotted_name
+    # Extract identifiers from dotted_name children
     identifiers = []
-    current = node
-    while current:
-        if current.type == "identifier":
-            identifiers.append(current)
-        current = current.next_sibling if hasattr(current, 'next_sibling') else None
+    
+    # Iterate over Tree-sitter children
+    for child in node.children:
+        if child.type == "identifier":
+            identifiers.append(child)
     
     if not identifiers:
         return None
@@ -704,28 +1149,26 @@ def handle_dotted_name(builder:GraphBuilder, node:Any, children:list[GNode]=None
     for i, ident_node in enumerate(identifiers):
         ident_text = ident_node.text.decode('utf-8') if hasattr(ident_node, 'text') else ""
         
-        # Find corresponding child node
-        ident_gnode = node_in_byte_range(ident_node.byte_range, children or [])
-        if not ident_gnode:
-            ident_gnode = GNode(
-                symbol=ident_text,
-                type="PUSH",
-                ctx="identifier",
-                start_byte=ident_node.start_byte,
-                end_byte=ident_node.end_byte
-            )
+        # We create fresh PUSH nodes for the reference chain
+        # We ignore 'children' (which contains POP nodes from handle_identifier)
+        ident_gnode = GNode(
+            symbol=ident_text,
+            type="PUSH",
+            ctx="identifier",
+            start_byte=ident_node.start_byte,
+            end_byte=ident_node.end_byte
+        )
         
-        ident_gnode.type = "PUSH"
         result_nodes.append(ident_gnode)
         
-        # Add dot node between identifiers (except for the last one)
+        # Add dot node between identifiers
         if i < len(identifiers) - 1:
             dot_node = GNode(
                 symbol=".",
                 type="PUSH",
                 ctx="dotted_name_dot",
                 start_byte=ident_node.end_byte,
-                end_byte=identifiers[i+1].start_byte if i+1 < len(identifiers) else ident_node.end_byte
+                end_byte=identifiers[i+1].start_byte
             )
             ident_gnode.children.append(dot_node)
             dot_node.parent.append(ident_gnode)
@@ -734,11 +1177,71 @@ def handle_dotted_name(builder:GraphBuilder, node:Any, children:list[GNode]=None
                 prev_node.parent.append(dot_node)
             prev_node = ident_gnode
         else:
+            # Last identifier (most specific)
             if prev_node:
                 ident_gnode.children.append(prev_node)
                 prev_node.parent.append(ident_gnode)
     
-    return result_nodes[0] if result_nodes and len(result_nodes) > 0 else None
+    # We return the FIRST identifier (the root of the module path, e.g. 'a' in 'a.b.c')?
+    # No, we want to return the node that represents the *usage*.
+    # In 'import a.b.c', the statement imports 'a'.
+    # But usually 'dotted_name' implies the whole path.
+    # If we return 'a', and attach it to import_statement, we have reference to 'a'.
+    # The chain 'a' -> 'b' -> 'c' exists.
+    # Wait, the edges direction?
+    # If I resolve 'a', I get 'a'.
+    # If I resolve 'a.b', I resolve 'a', then look for 'b' in 'a'.
+    # So 'a' must be reachable.
+    
+    # In my construction above:
+    # identifiers = [a, b, c]
+    # Loop 0: a. prev=None. 
+    # Loop 1: b. dot between a and b. a -> dot -> b?
+    # Code: ident_gnode (b). children.append(dot). dot.children.append(prev (a)).
+    # So b -> dot -> a.
+    # This means 'b' depends on 'a'.
+    # Loop 2: c. dot between b and c. c -> dot -> b.
+    # So c -> dot -> b -> dot -> a.
+    # If I have 'import a.b.c', I am importing the module 'c' (inside b, inside a).
+    # But 'import' statement usually binds 'a' in local scope.
+    # 'import a.b.c' -> defines 'a'. 'a' has attribute 'b'...
+    
+    # If I return result_nodes[0] (which is 'a'), and attach it.
+    # Then I have 'a'. 'a' has no children (in this graph construction, 'a' is leaf of dependency).
+    # Wait. 'b' -> 'a'. So 'b' is parent of 'a'?
+    # result_nodes = [a, b, c].
+    
+    # If I return identifiers[0] ('a').
+    # But my chain is c -> b -> a.
+    
+    # In 'import a.b.c', checking reference on 'a':
+    # 'a' is at [0].
+    # Checking reference on 'c'.
+    # 'c' is at [2].
+    
+    # If traverse from 'import_statement -> children'.
+    # If I assume 'handle_import_statement' uses the returned node.
+    # If I return 'a' (the start), it works for 'a'.
+    # But 'c' is NOT child of 'a'. 'c' is parent of 'a' in this PUSH chain.
+    # So 'c' is unreachable from 'import_statement' if I only return 'a'.
+    
+    # However, 'dotted_name' capture covers 'a.b.c'.
+    # Users might hover 'c'.
+    # If 'c' is not in the graph (reachable from root), it won't be found?
+    # Or 'GraphBuilder' adds ALL returned nodes? No, usually just the return value.
+    
+    # If I return the LAST node ('c')?
+    # Then 'c' -> 'b' -> 'a'.
+    # 'c' is reachable. 'b' (child of c) is reachable. 'a' (child of b) is reachable.
+    # This seems correct for reachability of all tokens.
+    
+    # But for 'import a.b.c', we define 'a'.
+    # If 'import_statement' children is 'c'.
+    # Structure: import_statement -> c -> b -> a.
+    # Does this represent "importing a"?
+
+    # Return wrapped in list for consistency with other handlers
+    return [result_nodes[-1]] if result_nodes else None
 
 def handle_aliased_import(builder:GraphBuilder, node:Any, children:list[GNode]=None):
     """
@@ -761,11 +1264,26 @@ def handle_aliased_import(builder:GraphBuilder, node:Any, children:list[GNode]=N
     
     # Find alias identifier in children
     alias_gnode = node_in_byte_range(alias_node.byte_range, children or [])
+    name_gnode = node_in_byte_range(name_node.byte_range, children or [])
+
+    if alias_gnode and name_gnode:
+        alias_gnode.type = "POP"
+        alias_gnode.ctx = "aliased_import"
+        
+        name_gnode.type = "PUSH"
+        name_gnode.ctx = "aliased_import_source"
+        
+        # Link Alias(POP) -> Name(PUSH)
+        alias_gnode.children.append(name_gnode)
+        name_gnode.parent.append(alias_gnode)
+        
+        return alias_gnode
+    
     if alias_gnode:
         alias_gnode.type = "POP"
         alias_gnode.ctx = "aliased_import"
         return alias_gnode
-    
+
     # Return a placeholder if not found
     return GNode(
         symbol="aliased_import",
@@ -858,6 +1376,9 @@ def handle_decorator(builder:GraphBuilder, node:Any, children:list[GNode]=None):
     Handle: @decorator
     Creates decorator reference node.
     """
+    if children:
+        propagate_type(children, 'PUSH')
+
     decorator_node = GNode(
         symbol="decorator",
         type="PUSH",
@@ -970,6 +1491,12 @@ def handle_match_statement(builder:GraphBuilder, node:Any, children:list[GNode]=
     Handle: match value: case pattern: (Python 3.10+)
     Creates scope for match statement.
     """
+    subject_node = node.child_by_field_name("subject")
+    if subject_node and children:
+        subject = node_in_byte_range(subject_node.byte_range, children)
+        if subject:
+            propagate_type([subject], 'PUSH')
+
     match_scope = GNode(
         symbol="match_statement",
         type="SCOPE",
@@ -986,6 +1513,12 @@ def handle_case_clause(builder:GraphBuilder, node:Any, children:list[GNode]=None
     Handle: case pattern:
     Creates scope for case clause with pattern binding.
     """
+    pattern_node = node.child_by_field_name("pattern")
+    if pattern_node and children:
+        pattern_gnodes = nodes_in_byte_range(pattern_node.byte_range, children)
+        if pattern_gnodes:
+            set_identifier_type(pattern_gnodes, 'POP')
+
     case_scope = GNode(
         symbol="case_clause",
         type="SCOPE",
@@ -1386,6 +1919,67 @@ def handle_generator_expression(builder:GraphBuilder, node:Any, children:list[GN
 # ==========================================================================
 # ============================= EXPRESSIONS ================================
 # ==========================================================================
+
+def handle_attribute(builder:GraphBuilder, node:Any, children:list[GNode]=None):
+    """
+    Handle: object.attribute
+    Builds a PUSH/POP chain: attribute -> . -> object.
+    """
+    object_node_field = node.child_by_field_name("object")
+    attribute_node_field = node.child_by_field_name("attribute")
+
+    if not object_node_field or not attribute_node_field:
+        logger.warning(f"attribute node missing object or attribute field at {node.start_byte}")
+        return children or GNode(
+            symbol="attribute",
+            type="SCOPE",
+            ctx="attribute",
+            start_byte=node.start_byte,
+            end_byte=node.end_byte,
+            children=children or []
+        )
+
+    object_node = node_in_byte_range(object_node_field.byte_range, children or [])
+    attribute_node = node_in_byte_range(attribute_node_field.byte_range, children or [])
+
+    if not object_node or not attribute_node:
+        logger.warning(f"attribute: object or attribute not found in children at {node.start_byte}")
+        return object_node or attribute_node or children or GNode(
+            symbol="attribute",
+            type="SCOPE",
+            ctx="attribute",
+            start_byte=node.start_byte,
+            end_byte=node.end_byte,
+            children=children or []
+        )
+
+    attribute_node.type = 'PUSH'
+    propagate_type([object_node], 'PUSH')
+
+    dot_node = GNode(
+        symbol=".",
+        type="PUSH",
+        ctx="attribute_dot",
+        start_byte=node.start_byte,
+        end_byte=node.end_byte,
+        children=[object_node]
+    )
+    object_node.parent.append(dot_node)
+
+    attribute_node.children.append(dot_node)
+    dot_node.parent.append(attribute_node)
+
+    attr_scope = GNode(
+        symbol="attribute",
+        type="SCOPE",
+        ctx="attribute",
+        start_byte=node.start_byte,
+        end_byte=node.end_byte,
+        children=[object_node, attribute_node]
+    )
+    link_children(attr_scope, [object_node, attribute_node])
+
+    return attr_scope
 
 def handle_subscript(builder:GraphBuilder, node:Any, children:list[GNode]=None):
     """
@@ -1789,7 +2383,7 @@ def handle_list_splat_pattern(builder:GraphBuilder, node:Any, children:list[GNod
     
     node_splat = GNode(
         symbol="*",
-        type="POP",
+        type="SCOPE",
         ctx="list_splat_pattern",
         start_byte=node.start_byte,
         end_byte=node.end_byte,
@@ -1810,7 +2404,7 @@ def handle_dictionary_splat_pattern(builder:GraphBuilder, node:Any, children:lis
     
     node_splat = GNode(
         symbol="**",
-        type="POP",
+        type="SCOPE",
         ctx="dictionary_splat_pattern",
         start_byte=node.start_byte,
         end_byte=node.end_byte,
@@ -1824,6 +2418,9 @@ def handle_lambda_parameters(builder:GraphBuilder, node:Any, children:list[GNode
     Handle: lambda x, y: ...
     Creates lambda parameters scope.
     """
+    if children:
+        set_identifier_type(children, 'POP')
+
     lp_scope = GNode(
         symbol="lambda_parameters",
         type="SCOPE",
@@ -1841,7 +2438,7 @@ def handle_argument_list(builder:GraphBuilder, node:Any, children:list[GNode]=No
     Creates argument list node.
     """
     if children:
-        propagate_type(children, 'PUSH')
+        propagate_type_filtered(children, 'PUSH', {'lambda', 'lambda_parameters'})
     
     arg_list_scope = GNode(
         symbol="argument_list",
@@ -1861,7 +2458,7 @@ def handle_keyword_argument(builder:GraphBuilder, node:Any, children:list[GNode]
     """
     if children and len(children) >= 2:
         # First is keyword name, second is value
-        propagate_type([children[1]], 'PUSH')
+        propagate_type_filtered([children[1]], 'PUSH', {'lambda', 'lambda_parameters'})
     
     kw_arg = GNode(
         symbol="keyword_argument",
@@ -1893,3 +2490,214 @@ def handle_block(builder:GraphBuilder, node:Any, children:list[GNode]=None):
     )
     link_children(block_node, children or [])
     return block_node
+
+
+# ==========================================================================
+# ===================== ASYNC/AWAIT CONSTRUCTS =============================
+# ==========================================================================
+
+def handle_async_function_definition(builder:GraphBuilder, node:Any, children:list[GNode]=None):
+    """
+    Handle: async def func(...): ...
+    Delegates to handle_function_definition and marks as async.
+    """
+    # Check if this is actually an async function
+    # In tree-sitter, async functions are decorated_definition with 'async' decorator
+    if node.type == "decorated_definition":
+        # Look for 'async' keyword in decorators
+        has_async = False
+        for child in node.children:
+            if child.type == "async" or (hasattr(child, 'text') and child.text == b'async'):
+                has_async = True
+                break
+
+        if not has_async:
+            # Not async, let regular decorated_definition handler deal with it
+            return children
+
+    # Delegate to regular function definition handler
+    result = handle_function_definition(builder, node, children)
+
+    # Mark as async if we got a result
+    if result and isinstance(result, GNode):
+        result.ctx = "async_function"
+    elif result and isinstance(result, list) and len(result) > 0:
+        result[0].ctx = "async_function"
+
+    return result
+
+
+def handle_async_with_statement(builder:GraphBuilder, node:Any, children:list[GNode]=None):
+    """
+    Handle: async with context as var: ...
+    Similar to with_statement but marks as async.
+    """
+    # Check if this is actually async with
+    if node.type == "with_statement":
+        # Look for 'async' keyword
+        has_async = False
+        for child in node.children:
+            if child.type == "async" or (hasattr(child, 'text') and child.text == b'async'):
+                has_async = True
+                break
+
+        if not has_async:
+            # Not async, return children
+            return children
+
+    # Delegate to regular with_statement handler
+    result = handle_with_statement(builder, node, children)
+
+    # Mark as async
+    if result and isinstance(result, GNode):
+        result.ctx = "async_with"
+    elif result and isinstance(result, list) and len(result) > 0:
+        result[0].ctx = "async_with"
+
+    return result
+
+
+def handle_async_for_statement(builder:GraphBuilder, node:Any, children:list[GNode]=None):
+    """
+    Handle: async for item in async_iterable: ...
+    Similar to for_statement but marks as async.
+    """
+    # Check if this is actually async for
+    if node.type == "for_statement":
+        # Look for 'async' keyword
+        has_async = False
+        for child in node.children:
+            if child.type == "async" or (hasattr(child, 'text') and child.text == b'async'):
+                has_async = True
+                break
+
+        if not has_async:
+            # Not async, return children
+            return children
+
+    # Delegate to regular for_statement handler
+    result = handle_for_statement(builder, node, children)
+
+    # Mark as async
+    if result and isinstance(result, GNode):
+        result.ctx = "async_for"
+    elif result and isinstance(result, list) and len(result) > 0:
+        result[0].ctx = "async_for"
+
+    return result
+
+
+def handle_await_expression(builder:GraphBuilder, node:Any, children:list[GNode]=None):
+    """
+    Handle: await expr
+    Creates PUSH node for awaited expression.
+    """
+    # Awaited expression is a reference (PUSH)
+    if children:
+        propagate_type(children, 'PUSH')
+
+    await_node = GNode(
+        symbol="await",
+        type="SCOPE",
+        ctx="await",
+        start_byte=node.start_byte,
+        end_byte=node.end_byte,
+        children=children or []
+    )
+    link_children(await_node, children or [])
+    return [await_node]
+
+
+# ==========================================================================
+# ========================= YIELD CONSTRUCTS ===============================
+# ==========================================================================
+
+def handle_yield_statement(builder:GraphBuilder, node:Any, children:list[GNode]=None):
+    """
+    Handle: yield value or yield from iterator
+    Marks yielded/delegated expression as PUSH (reference).
+    """
+    # Check if it's yield_from (yield from iterator)
+    is_yield_from = False
+    for child in node.children:
+        if hasattr(child, 'type') and child.type == "from":
+            is_yield_from = True
+            break
+
+    # Mark all children as PUSH (references)
+    if children:
+        propagate_type(children, 'PUSH')
+
+    yield_node = GNode(
+        symbol="yield_from" if is_yield_from else "yield",
+        type="SCOPE",
+        ctx="yield_from" if is_yield_from else "yield",
+        start_byte=node.start_byte,
+        end_byte=node.end_byte,
+        children=children or []
+    )
+    link_children(yield_node, children or [])
+    return [yield_node]
+
+
+# ==========================================================================
+# ===================== AUGMENTED ASSIGNMENT ===============================
+# ==========================================================================
+
+def handle_augmented_assignment(builder:GraphBuilder, node:Any, children:list[GNode]=None):
+    """
+    Handle: x += 1, y *= 2, etc.
+
+    Augmented assignment is BOTH:
+    - Reference (read old value) - PUSH
+    - Definition (write new value) - POP
+    """
+    # Get left and right operands
+    left_field = node.child_by_field_name("left")
+    right_field = node.child_by_field_name("right")
+
+    left_nodes = nodes_in_byte_range(
+        (left_field.start_byte, left_field.end_byte),
+        children or []
+    ) if left_field else []
+
+    right_nodes = nodes_in_byte_range(
+        (right_field.start_byte, right_field.end_byte),
+        children or []
+    ) if right_field else []
+
+    # Right side: pure reference (PUSH)
+    if right_nodes:
+        propagate_type(right_nodes, 'PUSH')
+
+    # Left side: BOTH read (PUSH) and write (POP)
+    # Create a compound structure: POP (write) -> PUSH (read)
+    result_nodes = []
+
+    for lnode in left_nodes:
+        if lnode.ctx == 'identifier' or lnode.type == 'POP':
+            # Create PUSH node for reading the old value
+            read_node = GNode(
+                symbol=lnode.symbol,
+                type='PUSH',
+                ctx='augmented_read',
+                start_byte=lnode.start_byte,
+                end_byte=lnode.end_byte
+            )
+
+            # Original node becomes POP for writing new value
+            lnode.type = 'POP'
+            lnode.ctx = 'augmented_write'
+
+            # Link: POP (write) depends on PUSH (read) and right side
+            lnode.children.append(read_node)
+            read_node.parent.append(lnode)
+
+            if right_nodes:
+                for rnode in right_nodes:
+                    lnode.children.append(rnode)
+                    rnode.parent.append(lnode)
+
+            result_nodes.append(lnode)
+
+    return result_nodes if result_nodes else (left_nodes + right_nodes)

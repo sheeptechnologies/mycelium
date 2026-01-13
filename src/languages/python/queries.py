@@ -4,14 +4,13 @@ PYTHON_QUERIES = {
     # ==========================================================================
     # MODULE
     # ==========================================================================
-    "(module)@module": [{"module": handle_module}],
+    # "(module)@module": [{"module": handle_module}],
     
     # ==========================================================================
     # IMPORTS (CRITICO)
     # ==========================================================================
     "(import_statement)@import_statement": [{"import_statement": handle_import_statement}],
     "(import_from_statement)@import_from_statement": [{"import_from_statement": handle_import_from_statement}],
-    "(aliased_import)@aliased_import": [{"aliased_import": handle_aliased_import}],
     "(relative_import)@relative_import": [{"relative_import": handle_relative_import}],
     "(wildcard_import)@wildcard_import": [{"wildcard_import": handle_wildcard_import}],
     "(dotted_name)@dotted_name": [{"dotted_name": handle_dotted_name}],
@@ -57,7 +56,8 @@ PYTHON_QUERIES = {
     "(continue_statement)@continue_statement": [{"continue_statement": handle_continue_statement}],
     "(delete_statement)@delete_statement": [{"delete_statement": handle_delete_statement}],
     "(assert_statement)@assert_statement": [{"assert_statement": handle_assert_statement}],
-    "(expression_statement (_))@expression_statement_assignment": [{"expression_statement_assignment": handle_expression_statement_assignment}],
+    "(expression_statement)@expression_statement": [{"expression_statement": handle_expression_statement}],
+    "(print_statement)@print_statement": [{"print_statement": handle_print_statement}],
     
     # ==========================================================================
     # DATA STRUCTURES
@@ -128,4 +128,23 @@ PYTHON_QUERIES = {
     "(lambda)@lambda": [{"lambda": handle_lambda}],
     "(typed_parameter)@typed_parameter": [{"typed_parameter": handle_typed_parameter}],
     "(typed_default_parameter)@typed_default_parameter": [{"typed_default_parameter": handle_typed_default_parameter}],
+
+    # ==========================================================================
+    # ASYNC/AWAIT CONSTRUCTS
+    # ==========================================================================
+    "(decorated_definition)@async_function": [{"async_function": handle_async_function_definition}],
+    "(with_statement)@async_with": [{"async_with": handle_async_with_statement}],
+    "(for_statement)@async_for": [{"async_for": handle_async_for_statement}],
+    "(await)@await": [{"await": handle_await_expression}],
+
+    # ==========================================================================
+    # YIELD CONSTRUCTS
+    # ==========================================================================
+    "(yield)@yield": [{"yield": handle_yield_statement}],
+    "(expression_statement (yield))@yield_stmt": [{"yield_stmt": handle_yield_statement}],
+
+    # ==========================================================================
+    # AUGMENTED ASSIGNMENT
+    # ==========================================================================
+    "(augmented_assignment)@augmented_assignment": [{"augmented_assignment": handle_augmented_assignment}],
 }

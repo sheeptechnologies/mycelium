@@ -28,7 +28,7 @@ class ReferenceResolver:
     3. Have both stacks empty at the start and end of the path
     """
     
-    def __init__(self, max_depth: int = 1000, max_paths: int = 100):
+    def __init__(self, max_depth: int = 200000, max_paths: int = 200000):
         """
         Initialize the resolver.
         
@@ -66,7 +66,7 @@ class ReferenceResolver:
             symbol_stack=[reference_node.symbol],
             scope_stack=[],
             path=[reference_node],
-            visited={id(reference_node)}
+            scope_exits=0
         )
         
         # Use BFS to explore paths
@@ -74,10 +74,35 @@ class ReferenceResolver:
         queue = deque([initial_state])
         paths_explored = 0
         
+        # Track best result (fewest scope exits)
+        min_scope_exits = float('inf')
+        
+        # Track seen states to avoid cycles and redundant work
+        # State key: (current_node_id, symbol_stack_tuple, scope_stack_ids_tuple)
+        seen_states = set()
+        
         while queue and paths_explored < self.max_paths:
             state = queue.popleft()
             paths_explored += 1
             
+            # Pruning based on shadowing:
+            # If we found a definition with depth N, we should stop exploring states 
+            # that already have > N depth.
+            current_scope_depth = len(state.scope_stack)
+            if current_scope_depth > min_scope_exits:
+                continue
+
+            # State Deduplication
+            # Include scope_stack to avoid false deduplication in different scope contexts
+            state_key = (
+                id(state.current_node),
+                tuple(state.symbol_stack),
+                tuple(id(s) for s in state.scope_stack),
+            )
+            if state_key in seen_states:
+                continue
+            seen_states.add(state_key) 
+
             # Check depth limit
             if len(state.path) > self.max_depth:
                 logger.debug(f"Path exceeded max depth: {len(state.path)}")
@@ -86,26 +111,47 @@ class ReferenceResolver:
             # Explore neighbors
             neighbors = self._get_neighbors(state.current_node, graph_roots)
             for neighbor in neighbors:
-                if id(neighbor) in state.visited:
-                    continue
-                
                 new_state = self._apply_transition(state, neighbor)
                 if new_state:
+                     # Check scope depth again after transition
+                    new_depth = len(new_state.scope_stack)
+                    if new_depth > min_scope_exits:
+                        continue
+                        
+                        
+                    # Check if we found a definition AFTER applying transition
+                    # (POP node should have been processed and symbol stack should be empty)
                     # Check if we found a definition AFTER applying transition
                     # (POP node should have been processed and symbol stack should be empty)
                     if self._is_valid_definition_after_transition(new_state):
+                        current_scope_depth = len(new_state.scope_stack)
                         result = ResolutionResult(
                             definition=neighbor,  # The POP node we just processed
                             path=new_state.path.copy(),
-                            confidence=self._calculate_confidence(new_state)
+                            confidence=self._calculate_confidence(new_state),
+                            scope_exits=current_scope_depth # Reuse field or rename. Let's use existing field but store depth
                         )
                         results.append(result)
-                        logger.debug(f"Found definition: {neighbor.symbol} via path of length {len(new_state.path)}")
+                        
+                        # Update min_scope_exits (actually min_scope_depth)
+                        if current_scope_depth < min_scope_exits:
+                            min_scope_exits = current_scope_depth
+                            
                         continue  # Don't explore further from this path
                     
                     # Continue exploring if state is valid
                     if self._is_valid_state(new_state):
+                        # print(f"Enqueue: {new_state.current_node.symbol} stack={new_state.symbol_stack}")
                         queue.append(new_state)
+        
+        # Filter results: keep only those with the minimum number of scope exits (shadowing)
+        if results:
+            final_results = [r for r in results if r.scope_exits == min_scope_exits]
+            logger.info(f"Resolution complete: found {len(final_results)} definition(s) for {reference_node.symbol} (filtered from {len(results)})")
+            return final_results
+            
+        logger.info(f"Resolution complete: found 0 definition(s) for {reference_node.symbol}")
+        return []
         
         logger.info(f"Resolution complete: found {len(results)} definition(s) for {reference_node.symbol}")
         return results
@@ -145,9 +191,8 @@ class ReferenceResolver:
             symbol_stack=state.symbol_stack.copy(),
             scope_stack=state.scope_stack.copy(),
             path=state.path + [next_node],
-            visited=state.visited.copy()
+            scope_exits=state.scope_exits
         )
-        new_state.visited.add(id(next_node))
         
         node_type = next_node.type.strip()
         current_node = state.current_node
@@ -159,19 +204,18 @@ class ReferenceResolver:
         
         # Handle SCOPE nodes: manage scope stack based on direction
         if node_type == 'SCOPE':
-            # Check if we're entering this scope (current node is parent of next_node)
-            is_entering = current_node in next_node.parent if next_node.parent else False
-            # Or if next_node contains current_node as child
-            is_entering = is_entering or (current_node in next_node.children)
-            
-            if is_entering:
+            if current_node in next_node.parent:
                 # Entering scope: push to stack
                 new_state.scope_stack.append(next_node)
-            else:
+                return new_state
+
+            if current_node in next_node.children:
                 # Exiting scope: pop from stack if it matches
                 if new_state.scope_stack and new_state.scope_stack[-1] == next_node:
                     new_state.scope_stack.pop()
-                # If it doesn't match, we might be traversing incorrectly, but allow it
+                    new_state.scope_exits += 1
+                return new_state
+
             return new_state
         
         # Handle PUSH nodes: add symbol to stack
@@ -198,13 +242,6 @@ class ReferenceResolver:
         # Other node types: just traverse (no stack changes)
         # But check if we're exiting a scope (going from child to parent SCOPE)
         else:
-            # Check if current node's parent is a SCOPE we should exit
-            if current_node.parent:
-                for parent in current_node.parent:
-                    if parent.type == 'SCOPE' and parent not in next_node.parent:
-                        # We're leaving this scope
-                        if new_state.scope_stack and new_state.scope_stack[-1] == parent:
-                            new_state.scope_stack.pop()
             return new_state
     
     def _is_valid_state(self, state: ResolutionState) -> bool:
@@ -235,6 +272,13 @@ class ReferenceResolver:
         - Child nodes (going down the hierarchy)
         - Sibling nodes in the same scope
         """
+        # Attribute chain roots should resolve through their dot/object chain,
+        # not by hopping directly to enclosing scopes.
+        if node.type == 'PUSH' and node.children:
+            for child in node.children:
+                if getattr(child, 'ctx', None) == 'attribute_dot':
+                    return list(node.children)
+
         neighbors: List[GNode] = []
         
         # Add parents
@@ -294,20 +338,29 @@ class ReferenceResolver:
         byte_offset = sum(len(l.encode('utf-8')) + 1 for l in lines[:line-1]) + (column - 1)
         
         # Search for PUSH nodes at this position
-        def find_at_position(node: GNode) -> Optional[GNode]:
-            if node.type == 'PUSH' and node.start_byte <= byte_offset <= node.end_byte:
-                return node
+        candidates = []
+        visited = set()
+        stack = list(graph_roots)
+        
+        while stack:
+            current = stack.pop()
             
-            for child in node.children:
-                result = find_at_position(child)
-                if result:
-                    return result
+            if id(current) in visited:
+                continue
+            visited.add(id(current))
             
+            # Check coverage
+            if current.start_byte <= byte_offset <= current.end_byte:
+                if current.type == 'PUSH':
+                    candidates.append(current)
+            
+            # Add children to stack to find more specific nodes
+            if current.children:
+                for child in reversed(current.children):
+                    stack.append(child)
+        
+        if not candidates:
             return None
-        
-        for root in graph_roots:
-            result = find_at_position(root)
-            if result:
-                return result
-        
-        return None
+            
+        # Return the smallest/most specific node
+        return min(candidates, key=lambda n: n.end_byte - n.start_byte)

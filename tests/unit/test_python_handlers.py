@@ -25,16 +25,18 @@ from src.languages.python.handlers import (
 
 class MockNode:
     """Mock Tree-sitter node for testing handlers."""
-    def __init__(self, start_byte=0, end_byte=10, node_type="test", text=b"test"):
+    def __init__(self, start_byte=0, end_byte=10, node_type="test", text=b"test", fields=None, children_list=None):
         self.start_byte = start_byte
         self.end_byte = end_byte
         self.type = node_type
         self.text = text
-    
+        self._fields = fields or {}
+        self.children = children_list or []
+
     def child_by_field_name(self, name):
         """Mock method for getting child by field name."""
-        return None
-    
+        return self._fields.get(name)
+
     @property
     def byte_range(self):
         """Return byte range tuple."""
@@ -314,8 +316,7 @@ class TestHandleReturnStatement:
     def test_handle_return_statement_with_identifier(self):
         """Test return statement with identifier."""
         builder = GraphBuilder()
-        
-        return_node = MockNode(start_byte=0, end_byte=15, node_type="return_statement")
+
         identifier = GNode(
             symbol="value",
             type="POP",
@@ -323,11 +324,22 @@ class TestHandleReturnStatement:
             start_byte=7,
             end_byte=12
         )
-        
+
+        # Create mock value node that represents the return value
+        value_node = MockNode(start_byte=7, end_byte=12, node_type="identifier")
+
+        # Create return_node with value field
+        return_node = MockNode(
+            start_byte=0,
+            end_byte=15,
+            node_type="return_statement",
+            fields={"value": value_node}
+        )
+
         children = [identifier]
-        
+
         result = handle_return_statement(builder, return_node, children)
-        
+
         assert isinstance(result, list)
         assert len(result) == 1
         assert result[0].type == "PUSH"  # Should be converted to PUSH

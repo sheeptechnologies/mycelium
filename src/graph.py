@@ -14,6 +14,88 @@ class GraphBuilder:
         )
         self.root_nodes = [self.root_node]
         self.stack: List[Dict] = [] 
+        self.function_params: Dict[str, List[str]] = {}
+        self.function_returns: Dict[str, tuple] = {}
+        self.module_sections: List[Dict] = []
+        self.module_dot_by_path: Dict[tuple, GNode] = {}
+        self.module_scope_by_path: Dict[tuple, GNode] = {}
+
+    def set_module_sections(self, sections: List[Dict]):
+        self.module_sections = sections
+        for section in self.module_sections:
+            module_path = section.get("module_path") or []
+            if not module_path:
+                continue
+            scope_node = self._ensure_module_chain(module_path)
+            section["scope_node"] = scope_node
+
+    def _ensure_module_chain(self, module_path: List[str]) -> GNode:
+        path_key = tuple(module_path)
+        if path_key in self.module_scope_by_path:
+            return self.module_scope_by_path[path_key]
+
+        prefix = []
+        for part in module_path:
+            prefix.append(part)
+            prefix_key = tuple(prefix)
+            if prefix_key in self.module_dot_by_path:
+                continue
+
+            pop_node = GNode(
+                symbol=part,
+                type="POP",
+                ctx="module_name",
+                start_byte=0,
+                end_byte=0,
+            )
+            dot_node = GNode(
+                symbol=".",
+                type="POP",
+                ctx="module_dot",
+                start_byte=0,
+                end_byte=0,
+            )
+            pop_node.children.append(dot_node)
+            dot_node.parent.append(pop_node)
+
+            if len(prefix) == 1:
+                self.root_node.children.append(pop_node)
+                pop_node.parent.append(self.root_node)
+            else:
+                parent_dot = self.module_dot_by_path[tuple(prefix[:-1])]
+                parent_dot.children.append(pop_node)
+                pop_node.parent.append(parent_dot)
+
+            self.module_dot_by_path[prefix_key] = dot_node
+
+        module_dot = self.module_dot_by_path[path_key]
+        module_scope = GNode(
+            symbol="module_scope",
+            type="SCOPE",
+            ctx="module_scope",
+            start_byte=0,
+            end_byte=0,
+        )
+        module_dot.children.append(module_scope)
+        module_scope.parent.append(module_dot)
+        self.module_scope_by_path[path_key] = module_scope
+        return module_scope
+
+    def _module_scope_for_node(self, node: GNode) -> GNode | None:
+        for section in self.module_sections:
+            start = section.get("start", 0)
+            end = section.get("end", 0)
+            if start <= node.start_byte < end:
+                return section.get("scope_node")
+        return None
+
+    def module_path_for_byte(self, byte_offset: int) -> List[str]:
+        for section in self.module_sections:
+            start = section.get("start", 0)
+            end = section.get("end", 0)
+            if start <= byte_offset < end:
+                return section.get("module_path", []) or []
+        return []
 
     def build(self, nodes: List[tuple[Node, str]], handler_map: dict):
 
@@ -62,7 +144,14 @@ class GraphBuilder:
         else:
             # Anche qui, se è la radice, usiamo extend sui figli
             # Nota: Assumo che self.root_node sia un GNode modulo/file
-            self.root_node.children.extend(items_to_add)
+            for item in items_to_add:
+                module_scope = self._module_scope_for_node(item)
+                if module_scope:
+                    module_scope.children.append(item)
+                    item.parent.append(module_scope)
+                else:
+                    self.root_node.children.append(item)
+                    item.parent.append(self.root_node)
 
     def sort_captures(self,captures: List[tuple[Any, str]]) -> List[tuple[Any, str]]:
         """
